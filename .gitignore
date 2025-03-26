@@ -6,5 +6,8 @@ gradle
 gradlew.bat
 .idea
 .gradle
+.classpath
+.project
+.settings
 
 sentence_small.txt
