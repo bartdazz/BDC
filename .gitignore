@@ -3,6 +3,8 @@ gradlew
 out
 build
 gradle
-gradlew.bat		
+gradlew.bat
+.idea
+.gradle
 
 sentence_small.txt
