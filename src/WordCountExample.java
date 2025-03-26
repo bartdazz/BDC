@@ -33,12 +33,7 @@ public class WordCountExample {
         // we create the sparkconfig object
         // setAppName set your name or group bcs in cloud veneto it's useful for the
         // debug
-        System.setProperty("SPARK_LOCAL_IP", "127.0.0.1");
-        SparkConf conf = new SparkConf()
-                .setAppName("WordCount")
-                .setMaster("local[*]")
-                .set("spark.driver.host", "localhost")
-                .set("spark.driver.bindAddress", "127.0.0.1");
+        SparkConf conf = new SparkConf(true).setAppName("WordCount");
         JavaSparkContext sc = new JavaSparkContext(conf);
         // the following is to reduce the amount of information represent in output
         sc.setLogLevel("WARN");
