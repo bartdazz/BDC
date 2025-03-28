@@ -60,6 +60,9 @@ class mymethods {
 
 
     // MRComputeStandardObjective
+    /*
+    descrizione intuitiva
+     */
     // MRComputeFairObjective
     // MRPrintStatistics
 
