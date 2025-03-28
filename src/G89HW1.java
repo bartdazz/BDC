@@ -67,10 +67,6 @@ class mymethods {
     // da mettere le 3 funzioni da implementare
 
     // MRComputeStandardObjective
-    /*
-    descrizione intuitiva
-
-     */
     // MRComputeFairObjective
     // MRPrintStatistics
 
