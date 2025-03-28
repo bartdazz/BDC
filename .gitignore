@@ -9,5 +9,7 @@ gradlew.bat
 .classpath
 .project
 .settings
+.DS_Store
 
 sentence_small.txt
+test_vectors.txt
