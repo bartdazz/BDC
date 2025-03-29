@@ -118,6 +118,7 @@ public class G89HW1 {
             Integer count = classCount._2(); // The count of elements in that class (value)
             System.out.println("Class: " + className + ", Count: " + count);
         }
+        System.out.println("Size of the RDD " + classItems.count());
 
         // // Stop SparkContext at the end
         sc.close();
