@@ -98,29 +98,34 @@ public class G89HW1 {
 
         // Doing an action on the RDD to check if everything is ok
         long lenPoints = inputPoints.count();
+        System.out.println("ACTION ON THE FIRST RDD");
         System.out.println("The number of points is " + lenPoints);
 
         // First Map Reduce part to compute the number of elements belonging to each
         // class
-        JavaPairRDD<String, Integer> classItems;
+        JavaPairRDD<String, Integer> classItems; // build a new RDD
         classItems = inputPoints
                 // element is a key-value pair
                 // with this map we want to set as key the demographic class
+                // so the second element of the Tuple2
+                // and as value we set 1 that then will be summed up in
+                // the reduceByKey phase
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
-                .reduceByKey((x, y) -> x + y);
+                .reduceByKey((x, y) -> x + y); // this sums all the 1 for each class
 
-        // Collect the results and print the class count
+        // The function collect takes al the data stored in the RDD and puts
+        // it into a list; the RDD is sufficiently small to allow us to do so
         List<Tuple2<String, Integer>> classCounts = classItems.collect();
 
         // Print the number of elements in each class
+        // Each element in the for loop is a Tuple2
         for (Tuple2<String, Integer> classCount : classCounts) {
             String className = classCount._1(); // The class name (key)
             Integer count = classCount._2(); // The count of elements in that class (value)
             System.out.println("Class: " + className + ", Count: " + count);
         }
-        System.out.println("Size of the RDD " + classItems.count());
 
-        // // Stop SparkContext at the end
+        // Stop SparkContext at the end
         sc.close();
     }
 }
