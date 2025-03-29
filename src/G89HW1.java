@@ -35,7 +35,7 @@ public class G89HW1 {
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("WARN"); // same setting as the example
 
-        // read the input
+        // read the text file in input
         JavaRDD<String> points = sc.textFile(args[0]).cache();
         // to the previous line we can eventually add
         //.repartition(K) 
@@ -46,9 +46,22 @@ public class G89HW1 {
         int K = Integer.parseInt(args[2]);
         int M = Integer.parseInt(args[3]);
         
+        // print command-line arguments
+        System.out.println("The number of partitions is: " + L);
+        System.out.println("The number of centroids is: " + K);
+        System.out.println("The number of iterations for the LLoyd's algorithm is: " + M);
+
+
+
         // SETTING GLOBAL VARIABLES
         long numpoints = points.count();
         System.out.println("The number of points is " + numpoints);
+
+
+        // build a key-value pairs RDD
+        // 
+
+
 
         // prova vettori
         // Create a vector using Vectors.dense
