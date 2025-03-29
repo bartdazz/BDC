@@ -35,13 +35,7 @@ public class G89HW1 {
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("WARN"); // same setting as the example
 
-        // read the text file in input
-        JavaRDD<String> points = sc.textFile(args[0]).cache();
-        // to the previous line we can eventually add
-        // .repartition(K)
-        // to tell spark to divide the input in K (number to be choosen) partitions
-        // inside the RDD
-
+        // Reading the input
         int L = Integer.parseInt(args[1]);
         int K = Integer.parseInt(args[2]);
         int M = Integer.parseInt(args[3]);
@@ -50,6 +44,12 @@ public class G89HW1 {
         System.out.println("The number of partitions is: " + L);
         System.out.println("The number of centroids is: " + K);
         System.out.println("The number of iterations for the LLoyd's algorithm is: " + M);
+
+        // read the text file in input
+        JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
+
+        // .repartition is used to tell spark to divide the input in L partitions
+        // inside the RDD
 
         // SETTING GLOBAL VARIABLES
         long numpoints = points.count();
@@ -95,17 +95,30 @@ public class G89HW1 {
                     // return an iterator over the pairs as the result of this function
                     return pairs.iterator();
                 });
-        long lenPoints = points.count();
+
+        // Doing an action on the RDD to check if everything is ok
+        long lenPoints = inputPoints.count();
         System.out.println("The number of points is " + lenPoints);
 
-        // prova vettori
-        // Create a vector using Vectors.dense
-        // Vector v1 = Vectors.dense(1.0, 2.0, 3.0);
-        // Vector v2 = Vectors.dense(4.0, 5.0, 6.0);
-        // // Compute squared Euclidean distance
-        // double distance = Vectors.sqdist(v1, v2);
-        // // Print results
-        // System.out.println("Vector 1: " + v1);
+        // First Map Reduce part to compute the number of elements belonging to each
+        // class
+        JavaPairRDD<String, Integer> classItems;
+        classItems = inputPoints
+                // element is a key-value pair
+                // with this map we want to set as key the demographic class
+                .mapToPair((element) -> new Tuple2<>(element._2(), 1))
+                .reduceByKey((x, y) -> x + y);
+
+        // Collect the results and print the class count
+        List<Tuple2<String, Integer>> classCounts = classItems.collect();
+
+        // Print the number of elements in each class
+        for (Tuple2<String, Integer> classCount : classCounts) {
+            String className = classCount._1(); // The class name (key)
+            Integer count = classCount._2(); // The count of elements in that class (value)
+            System.out.println("Class: " + className + ", Count: " + count);
+        }
+
         // // Stop SparkContext at the end
         sc.close();
     }
