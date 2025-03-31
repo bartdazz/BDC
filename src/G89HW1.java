@@ -119,13 +119,15 @@ public class G89HW1 {
 
         // Print the number of elements in each class
         // Each element in the for loop is a Tuple2
+        int classA = 0;
+        int classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
             String className = classCount._1(); // The class name (key)
             Integer count = classCount._2(); // The count of elements in that class (value)
             if (className == "A") {
-                int classA = count;
+                classA = count;
             } else {
-                int classB = count;
+                classB = count;
             }
         }
         System.out.println("N = " + numpoints
