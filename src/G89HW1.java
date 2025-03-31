@@ -41,9 +41,10 @@ public class G89HW1 {
         int M = Integer.parseInt(args[3]);
 
         // print command-line arguments
-        System.out.println("The number of partitions is: " + L);
-        System.out.println("The number of centroids is: " + K);
-        System.out.println("The number of iterations for the LLoyd's algorithm is: " + M);
+        System.out.println("Input file = " + args[0]
+                + ", L = " + L
+                + ", K = " + K
+                + ", M = " + M);
 
         // read the text file in input
         JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
@@ -53,7 +54,6 @@ public class G89HW1 {
 
         // SETTING GLOBAL VARIABLES
         long numpoints = points.count();
-        System.out.println("The number of points is " + numpoints);
 
         // build a key-value pairs RDD
         JavaPairRDD<Vector, String> inputPoints;
@@ -122,8 +122,15 @@ public class G89HW1 {
         for (Tuple2<String, Integer> classCount : classCounts) {
             String className = classCount._1(); // The class name (key)
             Integer count = classCount._2(); // The count of elements in that class (value)
-            System.out.println("Class: " + className + ", Count: " + count);
+            if (className == "A") {
+                int classA = count;
+            } else {
+                int classB = count;
+            }
         }
+        System.out.println("N = " + numpoints
+                + ", NA = " + classA
+                + ", NB = " + classB);
 
         // Stop SparkContext at the end
         sc.close();
