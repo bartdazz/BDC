@@ -2,7 +2,7 @@
 
 ## Exercise 1
 # How to run the code 
-**To run the program on Intellij use as input "test_vectors.txt 1 1 1" (the "1 1 1" is used to assign the values of L, K, M).**
+**To run the program on Intellij use as input "datasets/uber_small.csv 1 1 1". Or tu run the small test file (written by me) run "test_vectors.txt 1 1 1" (the "1 1 1" is used to assign the values of L, K, M).**
 
 ### What to do?
 First we read the input file into an RDD. After that we have to remember that the last element of each row represents the class the point belongs to and that all the previous elements are the coordinates of the point and that have to be stored as a vector. To transform values in a vector we can use Vectors.dense().
