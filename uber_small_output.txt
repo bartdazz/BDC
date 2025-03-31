@@ -1,0 +1,22 @@
+======= EXAMPLE 1 OF OUTPUT FOR L = 1, K = 4, M = 20 =======
+
+Input file = datasets/uber_small.csv, L = 1, K = 4, M = 20
+N = 1012, NA = 782, NB = 230
+Delta(U,C) = 0.002035
+Phi(A,B,C) = 0.002653
+i = 0, center = (40.750721,-73.980436), NA0 = 749, NB0 = 209
+i = 1, center = (40.724214,-74.193689), NA1 = 22, NB1 = 14
+i = 2, center = (40.779300,-73.428700), NA2 = 1, NB2 = 1
+i = 3, center = (40.663394,-73.786612), NA3 = 10, NB3 = 6
+
+
+======= EXAMPLE 2 OF OUTPUT FOR L = 2, K = 4, M = 20 =======
+
+Input file = datasets/uber_small.csv, L = 2, K = 4, M = 20
+N = 1012, NA = 782, NB = 230
+Delta(U,C) = 0.001909
+Phi(A,B,C) = 0.002407
+i = 0, center = (40.749035,-73.984431), NA0 = 725, NB0 = 192
+i = 1, center = (40.873440,-74.192170), NA1 = 7, NB1 = 3
+i = 2, center = (40.693363,-74.178147), NA2 = 19, NB2 = 11
+i = 3, center = (40.746095,-73.830627), NA3 = 31, NB3 = 24
