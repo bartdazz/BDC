@@ -40,12 +40,6 @@ public class G89HW1 {
         int K = Integer.parseInt(args[2]);
         int M = Integer.parseInt(args[3]);
 
-        // print command-line arguments
-        System.out.println("Input file = " + args[0]
-                + ", L = " + L
-                + ", K = " + K
-                + ", M = " + M);
-
         // read the text file in input
         JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
 
@@ -98,8 +92,6 @@ public class G89HW1 {
 
         // Doing an action on the RDD to check if everything is ok
         long lenPoints = inputPoints.count();
-        System.out.println("ACTION ON THE FIRST RDD");
-        System.out.println("The number of points is " + lenPoints);
 
         // First Map Reduce part to compute the number of elements belonging to each
         // class
@@ -130,6 +122,16 @@ public class G89HW1 {
                 classB = count;
             }
         }
+
+        // print command-line arguments
+        // printing all the informations here otherwise in the
+        // middle of the output were printed Spark's logs
+
+        System.out.println("Input file = " + args[0]
+                + ", L = " + L
+                + ", K = " + K
+                + ", M = " + M);
+
         System.out.println("N = " + numpoints
                 + ", NA = " + classA
                 + ", NB = " + classB);
