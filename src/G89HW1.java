@@ -93,6 +93,7 @@ public class G89HW1 {
         // Doing an action on the RDD to check if everything is ok
         long lenPoints = inputPoints.count();
 
+
         // First Map Reduce part to compute the number of elements belonging to each
         // class
         JavaPairRDD<String, Integer> classItems; // build a new RDD
@@ -116,17 +117,16 @@ public class G89HW1 {
         for (Tuple2<String, Integer> classCount : classCounts) {
             String className = classCount._1(); // The class name (key)
             Integer count = classCount._2(); // The count of elements in that class (value)
-            if (className == "A") {
+            if (Objects.equals(className, "A")) { // object equals corresponds to ==
                 classA = count;
             } else {
                 classB = count;
             }
         }
-
         // print command-line arguments
-        // printing all the informations here otherwise in the
-        // middle of the output were printed Spark's logs
-
+        /*
+        print all the output here otherwise spark prints its log info in the middle
+         */
         System.out.println("Input file = " + args[0]
                 + ", L = " + L
                 + ", K = " + K
