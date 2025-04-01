@@ -9,6 +9,7 @@ import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.rdd.RDD;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -149,3 +150,11 @@ class mymethods {
     // MRPrintStatistics
 
 }
+/*
+ * begin of the MRCompute... read the readme for the idea of the implementation
+ * public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
+     * JavaRDD<Double> StandardObjective;
+     * StandardObjective = inputPoints.flatMapToPair(
+         * )
+ * }
+*/

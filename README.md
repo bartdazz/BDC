@@ -25,3 +25,8 @@ We have to apply the method flatMapToPair to the input RDD. The function we'll u
 
 ### Counting the number of elements belonging to each demographic group
 We can do this with a very simple Map Reduce algorithm. From a key value pairs RDD we set as key the demographic group and then we shuffle by key. In this way for the reduce phase we have as input a key which is the group and a value a list of points. We just have to print the length of the two lists.
+
+### How to compute MRComputeStandardObjective?
+The main thing is to be able to implement an efficient MR algorithm to compute the distance of each point from the set of centroids.
+Possible idea: keep the point as the key of the pairs and as element put a list containing the distances of the point from all the centroids. Compute the minimum of this list and replace all the keys with the same value e.g. 0 (this could be done also in two steps to avoid having all the data in one reducer) and then sum the squared distances.
+- Map Round 1: 
