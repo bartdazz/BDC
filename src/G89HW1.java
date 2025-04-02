@@ -66,7 +66,13 @@ public class G89HW1 {
                     String[] pointString = Arrays.copyOfRange(tokens, 0, len - 1);
 
                     // Transforming the coordinates into doubles
-                    // COPIED FROM CHATGPT : UNDERSTAND BETTER !!!
+                    // COPIED FROM CHATGPT : UNDERSTAND BETTER !!! 
+                    /*
+                     * could also do something like :
+                     *  for (int i = 0; i < sarray.length; i++) {
+                       * values[i] = Double.parseDouble(sarray[i]);
+                      * }
+                      */
                     double[] pointDouble = Arrays
                             .stream(pointString)
                             .mapToDouble(Double::parseDouble)
