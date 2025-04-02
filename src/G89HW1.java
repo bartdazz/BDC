@@ -229,7 +229,13 @@ class mymethods {
      * Shuffle and then in the reduce phase sum all the distances of the one with the same key
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
+        /*
+        RISPETTO A QUELLO DI PRIMA ORA DOBBIAMO PORTARCI DIETRO LE COORDINATE DEL PUNTO E LA CLASSE
+        BASTA DEFINIRE BENE L'IMPUT E IMPLEMENTARE UN MAP TO PAIR A SECONDA DI SE HA 'A' O 'B'
+        MA NON SO COME SCRIVERLO IN JAVA
+         */
 
+        // Round 1
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> FairObjective;
         ArrayList<Tuple2<Vector, Double>> pointDistances = new ArrayList<>();
@@ -251,8 +257,6 @@ class mymethods {
                 .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<Integer, Double>> StandObj = FairObjective.collect();
-
-        return StandObj.get(0)._2() / numPoints;
     }
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
 
