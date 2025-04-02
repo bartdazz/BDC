@@ -161,7 +161,6 @@ class mymethods {
     // MRPrintStatistics
 
     // MRComputeFairObjective read the readme for the idea of the implementation
-    public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
     /*
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * MR COMPUTE STANDARD OBJECTIVE
@@ -179,6 +178,7 @@ class mymethods {
      * Map each (Point, smaller distance) to (0, smaller distance)
      * Shuflle and then in the reduce phase sum all the distances
      */
+    public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
         ArrayList<Tuple2<Vector, Double>> pointDistances = new ArrayList<>();
