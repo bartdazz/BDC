@@ -36,12 +36,12 @@ public class G89HW1 {
 
         // Initialize JavaSparkContext
         JavaSparkContext sc = new JavaSparkContext(conf);
-       // sc.setLogLevel("WARN"); // same setting as the example
+        // sc.setLogLevel("WARN"); // same setting as the example
 
         // Reading the input
-        int L = Integer.parseInt(args[1]);  // number of partitions of the RDD
-        int K = Integer.parseInt(args[2]);  // number of clusters
-        int M = Integer.parseInt(args[3]);  // number of iterations
+        int L = Integer.parseInt(args[1]); // number of partitions of the RDD
+        int K = Integer.parseInt(args[2]); // number of clusters
+        int M = Integer.parseInt(args[3]); // number of iterations
 
         // read the text file in input
         JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
@@ -68,13 +68,13 @@ public class G89HW1 {
                     String[] pointString = Arrays.copyOfRange(tokens, 0, len - 1);
 
                     // Transforming the coordinates into doubles
-                    // COPIED FROM CHATGPT : UNDERSTAND BETTER !!! 
+                    // COPIED FROM CHATGPT : UNDERSTAND BETTER !!!
                     /*
                      * could also do something like :
-                     *  for (int i = 0; i < sarray.length; i++) {
-                       * values[i] = Double.parseDouble(sarray[i]);
-                      * }
-                      */
+                     * for (int i = 0; i < sarray.length; i++) {
+                     * values[i] = Double.parseDouble(sarray[i]);
+                     * }
+                     */
                     double[] pointDouble = Arrays
                             .stream(pointString)
                             .mapToDouble(Double::parseDouble)
@@ -148,7 +148,6 @@ public class G89HW1 {
         // get centers
         Vector[] centers = clusters.clusterCenters();
 
-
         // Stop SparkContext at the end
         sc.close();
     }
@@ -160,7 +159,23 @@ class mymethods {
     // MRComputeFairObjective
     // MRPrintStatistics
 
-    // begin of the MRCompute... read the readme for the idea of the implementation
+    /*
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * MR COMPUTE STANDARD OBJECTIVE
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * Implementation:
+     *
+     * ----- ROUND 1 ----
+     * Map each (Point, demographic class) pair to (Point, d_i) where d_i is the
+     * distance between the point and the i-th centroid computed by the LLoyd's
+     * algorithm. This produces a larger RDD
+     * Then we group elements by key which is the point (Shuffle phase) and the
+     * reduce phase consists in taking the minimum distance for each point
+     *
+     * ---- ROUND 2 ----
+     * Map each (Point, smaller distance) to (0, smaller distance)
+     * Shuflle and then in the reduce phase sum all the distances
+     */
     public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
@@ -168,19 +183,19 @@ class mymethods {
 
         // Round 1
         StandardObjective = rdd.flatMapToPair((pair) -> {
-                    Vector point = pair._1();
-                    for (Vector center : centroids) {
-                        // compute the distance between the center selected and the point
-                        double distance = Vectors.sqdist(point, center);
-                        pointDistances.add(new Tuple2<Vector,Double>(point, distance));
-                    }
-                    return pointDistances.iterator();
-                })
+            Vector point = pair._1();
+            for (Vector center : centroids) {
+                // compute the distance between the selected center and the point
+                double distance = Vectors.sqdist(point, center);
+                pointDistances.add(new Tuple2<Vector, Double>(point, distance));
+            }
+            return pointDistances.iterator();
+        })
                 .reduceByKey((x, y) -> Math.min(x, y))
 
                 // Round 2
                 .mapToPair((element) -> new Tuple2<>(0, element._2()))
-                .reduceByKey((x, y) -> x+y);
+                .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<Integer, Double>> StandObj = StandardObjective.collect();
         double result = StandObj.get(0)._2();
@@ -188,7 +203,4 @@ class mymethods {
         return result;
     }
 
-
 }
-
-
