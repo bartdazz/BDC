@@ -143,10 +143,12 @@ public class G89HW1 {
         System.out.println("N = " + numpoints
                 + ", NA = " + classA
                 + ", NB = " + classB);
+        
+        KMeansModel clusters = KMeans.train(inputPoints.rdd(), K, M);
+        // get centers
+        Vector[] centers = clusters.clusterCenters();
 
-        // KMeansModel clusters = KMeans.train(inputPoints.rdd(), K, M);
-
-
+        
         // Stop SparkContext at the end
         sc.close();
     }
@@ -160,7 +162,7 @@ class mymethods {
 
     // begin of the MRCompute... read the readme for the idea of the implementation
     public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-        long numpoints = rdd.count();
+        long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
         ArrayList<Tuple2<Vector, Double>> pointDistances = new ArrayList<>();
 
@@ -168,20 +170,21 @@ class mymethods {
         StandardObjective = rdd.flatMapToPair((pair) -> {
                     Vector point = pair._1();
                     for (Vector center : centroids) {
+                        // compute the distance between the center selected and the point
                         double distance = Vectors.sqdist(point, center);
                         pointDistances.add(new Tuple2<Vector,Double>(point, distance));
                     }
                     return pointDistances.iterator();
                 })
                 .reduceByKey((x, y) -> Math.min(x, y))
-                // Round 2
 
+                // Round 2
                 .mapToPair((element) -> new Tuple2<>(0, element._2()))
                 .reduceByKey((x, y) -> x+y);
 
         List<Tuple2<Integer, Double>> StandObj = StandardObjective.collect();
         double result = StandObj.get(0)._2();
-        result = result / numpoints;
+        result = result / numPoints;
         return result;
     }
 
