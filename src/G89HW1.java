@@ -25,7 +25,12 @@ public class G89HW1 {
         Logger.getLogger("org").setLevel(Level.OFF);
         Logger.getLogger("akka").setLevel(Level.OFF);
         // Create Spark configuration with master URL
-        SparkConf conf = new SparkConf().setAppName("G89HW1");
+        SparkConf conf = new SparkConf()
+                .setAppName("WordCount")
+                .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
+                .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
+                .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));
+        //SparkConf conf = new SparkConf().setAppName("G89HW1");
         // I think we don't need setMaster since we'll set it from intellij
         // .setMaster("local[*]"); // Use all CPU cores
 
@@ -143,12 +148,21 @@ public class G89HW1 {
                 + ", NA = " + classA
                 + ", NB = " + classB);
 
+        // train model
         KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
         // get centers
         Vector[] centers = clusters.clusterCenters();
-        double a = mymethods.MRComputeStandardObjective( inputPoints , centers );
-        // Viene palesemente troppo piccolo
-        System.out.println(a);
+
+        // result of MRComputeStandardObjective
+        double result1 = mymethods.MRComputeStandardObjective( inputPoints, centers);
+
+
+        System.out.println("Delta(U,C) =" + result1);
+
+        // check centers
+        for (Vector c : centers){
+            System.out.println(c);
+        }
 
         // Stop SparkContext at the end
         sc.close();
@@ -156,9 +170,6 @@ public class G89HW1 {
 }
 
 class mymethods {
-
-    // MRComputeFairObjective
-    // MRPrintStatistics
 
     // MRComputeFairObjective read the readme for the idea of the implementation
     /*
@@ -204,9 +215,14 @@ class mymethods {
         result = result / numPoints;
         return result;
     }
-    
-    // MRComputeFairObjective
-    // MRPrintStatistics
+    public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
+        double result = 0;
+        return result;
+    }
+    public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
+
+
+    }
 
 
 }
