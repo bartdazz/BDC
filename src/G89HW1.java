@@ -94,7 +94,6 @@ public class G89HW1 {
         // Doing an action on the RDD to check if everything is ok
         long lenPoints = inputPoints.count();
 
-
         // First Map Reduce part to compute the number of elements belonging to each
         // class
         JavaPairRDD<String, Integer> classItems; // build a new RDD
@@ -126,7 +125,7 @@ public class G89HW1 {
         }
         // print command-line arguments
         /*
-        print all the output here otherwise spark prints its log info in the middle
+         * print all the output here otherwise spark prints its log info in the middle
          */
         System.out.println("Input file = " + args[0]
                 + ", L = " + L
@@ -150,11 +149,29 @@ class mymethods {
     // MRPrintStatistics
 
 }
-/*
- * begin of the MRCompute... read the readme for the idea of the implementation
- * public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-     * JavaRDD<Double> StandardObjective;
-     * StandardObjective = inputPoints.flatMapToPair(
-         * )
- * }
-*/
+
+// begin of the MRCompute... read the readme for the idea of the implementation
+public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
+    long numpoints = rdd.count();
+    JavaPairRDD<Integer, Double> StandardObjective;
+    ArrayList<Tuple2<Vector, Double>> pointDistances;
+
+    // Round 1
+    StandardObjective = rdd.flatMapToPair((pair) -> {
+        Vector point = pair._1();
+        for (Vector center : centroids) {
+            double distance = Vectors.sqdist(point, center);
+            pointDistances.add(new Tuple2<Vector,Double>(point, distance));
+        }
+        return pointDistances.iterator();
+    })
+    .reduceByKey((x, y) -> Math.min(x, y))
+    // Round 2
+
+    .mapToPair((element) -> new Tuple2<>(0, element._2()))
+    .reduceByKey((x, y) -> x+y);
+
+    List<Tuple2<Integer, Double>> StandObj = StandardObjective.collect();
+    double result = StandObj.get(0)._2();
+    result = result / numpoints;
+ }
