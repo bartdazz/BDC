@@ -215,25 +215,44 @@ class mymethods {
      * MR COMPUTE FAIR OBJECTIVE
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * Implementation:
-     * divide the data into two subset and apply the MRComputeStandardObjective function
+     *
+     * ----- ROUND 1 ----
+     * Map each (Point, demographic class) pair to (Point, d_i) where d_i is the
+     * distance between the point and the i-th centroid computed by the LLoyd's
+     * algorithm. This produces a larger RDD
+     * Then we group elements by key which is the point (Shuffle phase) and the
+     * reduce phase consists in taking the minimum distance for each point
+     *
+     * ---- ROUND 2 ----
+     * Map each (Point, smaller distance) to (0, smaller distance) if Point._2 = "A",
+     * otherwise map it to (1, smaller distance)
+     * Shuffle and then in the reduce phase sum all the distances of the one with the same key
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
 
-        // FORSE è IMPLEMENTATA IN UN MODO LENTO E MALE
-        // FORSE è DA USARE IL MAP REDUCE??BHO
-        // però così di sicuro funziona
+        long numPoints = rdd.count();
+        JavaPairRDD<Integer, Double> FairObjective;
+        ArrayList<Tuple2<Vector, Double>> pointDistances = new ArrayList<>();
 
+        // Round 1
+        FairObjective = rdd.flatMapToPair((pair) -> {
+                    Vector point = pair._1();
+                    for (Vector center : centroids) {
+                        // compute the distance between the selected center and the point
+                        double distance = Vectors.sqdist(point, center);
+                        pointDistances.add(new Tuple2<Vector, Double>(point, distance));
+                    }
+                    return pointDistances.iterator();
+                })
+                .reduceByKey((x, y) -> Math.min(x, y))
 
-        // Filter the RDD into two subsets
-        JavaPairRDD<Vector, String> rddA = rdd.filter(pair -> pair._2().equals("A"));
-        JavaPairRDD<Vector, String> rddB = rdd.filter(pair -> pair._2().equals("B"));
+                // Round 2
+                .mapToPair((element) -> new Tuple2<>(0, element._2()))
+                .reduceByKey((x, y) -> x + y);
 
-        // Compute the standard objective for each subset
-        double RA = MRComputeStandardObjective(rddA, centroids);
-        double RB = MRComputeStandardObjective(rddB, centroids);
+        List<Tuple2<Integer, Double>> StandObj = FairObjective.collect();
 
-        // return the max of the two results
-        return Math.max(RA,RB);
+        return StandObj.get(0)._2() / numPoints;
     }
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
 
