@@ -100,6 +100,10 @@ public class G89HW1 {
                 });
 
         // Doing an action on the RDD to check if everything is ok
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        // ATTENTION
+        // 
+        // Maybe this isn't needed !!
         long lenPoints = inputPoints.count();
 
         // First Map Reduce part to compute the number of elements belonging to each
