@@ -158,11 +158,6 @@ public class G89HW1 {
 }
 
 class mymethods {
-    // da mettere le 3 funzioni da implementare
-
-    // MRComputeFairObjective
-    // MRPrintStatistics
-
     /*
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * MR COMPUTE STANDARD OBJECTIVE
@@ -206,5 +201,9 @@ class mymethods {
         result = result / numPoints;
         return result;
     }
+    
+    // MRComputeFairObjective
+    // MRPrintStatistics
+
 
 }
