@@ -1,0 +1,5 @@
+SparkConf conf = new SparkConf()
+    .setAppName("WordCount")
+    .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
+    .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
+    .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));

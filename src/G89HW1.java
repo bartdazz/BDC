@@ -36,7 +36,7 @@ public class G89HW1 {
 
         // Initialize JavaSparkContext
         JavaSparkContext sc = new JavaSparkContext(conf);
-        sc.setLogLevel("WARN"); // same setting as the example
+       // sc.setLogLevel("WARN"); // same setting as the example
 
         // Reading the input
         int L = Integer.parseInt(args[1]);  // number of partitions of the RDD
@@ -143,12 +143,12 @@ public class G89HW1 {
         System.out.println("N = " + numpoints
                 + ", NA = " + classA
                 + ", NB = " + classB);
-        
-        KMeansModel clusters = KMeans.train(inputPoints.rdd(), K, M);
+
+        KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
         // get centers
         Vector[] centers = clusters.clusterCenters();
 
-        
+
         // Stop SparkContext at the end
         sc.close();
     }
