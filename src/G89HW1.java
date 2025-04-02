@@ -5,17 +5,13 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
-import org.apache.spark.rdd.RDD;
 
 import org.apache.spark.mllib.clustering.KMeans;
 import org.apache.spark.mllib.clustering.KMeansModel;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+
 import java.util.*;
 
 public class G89HW1 {
@@ -28,7 +24,6 @@ public class G89HW1 {
         // Disable Spark and Akka logs
         Logger.getLogger("org").setLevel(Level.OFF);
         Logger.getLogger("akka").setLevel(Level.OFF);
-
         // Create Spark configuration with master URL
         SparkConf conf = new SparkConf().setAppName("G89HW1");
         // I think we don't need setMaster since we'll set it from intellij
@@ -147,7 +142,9 @@ public class G89HW1 {
         KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
         // get centers
         Vector[] centers = clusters.clusterCenters();
-
+        double a = mymethods.MRComputeStandardObjective( inputPoints , centers );
+        // Viene palesemente troppo piccolo
+        System.out.println(a);
 
         // Stop SparkContext at the end
         sc.close();
@@ -155,13 +152,12 @@ public class G89HW1 {
 }
 
 class mymethods {
-    // da mettere le 3 funzioni da implementare
 
     // MRComputeFairObjective
     // MRPrintStatistics
 
-    // begin of the MRCompute... read the readme for the idea of the implementation
-    public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
+    // MRComputeFairObjective read the readme for the idea of the implementation
+    public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
         ArrayList<Tuple2<Vector, Double>> pointDistances = new ArrayList<>();
