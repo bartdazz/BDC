@@ -144,7 +144,7 @@ public class G89HW1 {
                 + ", NA = " + classA
                 + ", NB = " + classB);
 
-        KMeansModel clusters = KMeans.train(inputPoints.rdd(), K, M);
+        // KMeansModel clusters = KMeans.train(inputPoints.rdd(), K, M);
 
 
         // Stop SparkContext at the end
@@ -155,34 +155,37 @@ public class G89HW1 {
 class mymethods {
     // da mettere le 3 funzioni da implementare
 
-    // MRComputeStandardObjective
     // MRComputeFairObjective
     // MRPrintStatistics
 
+    // begin of the MRCompute... read the readme for the idea of the implementation
+    public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
+        long numpoints = rdd.count();
+        JavaPairRDD<Integer, Double> StandardObjective;
+        ArrayList<Tuple2<Vector, Double>> pointDistances = new ArrayList<>();
+
+        // Round 1
+        StandardObjective = rdd.flatMapToPair((pair) -> {
+                    Vector point = pair._1();
+                    for (Vector center : centroids) {
+                        double distance = Vectors.sqdist(point, center);
+                        pointDistances.add(new Tuple2<Vector,Double>(point, distance));
+                    }
+                    return pointDistances.iterator();
+                })
+                .reduceByKey((x, y) -> Math.min(x, y))
+                // Round 2
+
+                .mapToPair((element) -> new Tuple2<>(0, element._2()))
+                .reduceByKey((x, y) -> x+y);
+
+        List<Tuple2<Integer, Double>> StandObj = StandardObjective.collect();
+        double result = StandObj.get(0)._2();
+        result = result / numpoints;
+        return result;
+    }
+
+
 }
 
-// begin of the MRCompute... read the readme for the idea of the implementation
-public double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-    long numpoints = rdd.count();
-    JavaPairRDD<Integer, Double> StandardObjective;
-    ArrayList<Tuple2<Vector, Double>> pointDistances;
 
-    // Round 1
-    StandardObjective = rdd.flatMapToPair((pair) -> {
-        Vector point = pair._1();
-        for (Vector center : centroids) {
-            double distance = Vectors.sqdist(point, center);
-            pointDistances.add(new Tuple2<Vector,Double>(point, distance));
-        }
-        return pointDistances.iterator();
-    })
-    .reduceByKey((x, y) -> Math.min(x, y))
-    // Round 2
-
-    .mapToPair((element) -> new Tuple2<>(0, element._2()))
-    .reduceByKey((x, y) -> x+y);
-
-    List<Tuple2<Integer, Double>> StandObj = StandardObjective.collect();
-    double result = StandObj.get(0)._2();
-    result = result / numpoints;
- }
