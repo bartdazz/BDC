@@ -143,16 +143,15 @@ public class G89HW1 {
                 + ", NA = " + classA
                 + ", NB = " + classB);
 
-        // train model
+        // initialize and train the model
         KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
         // get centers
         Vector[] centers = clusters.clusterCenters();
 
         // result of MRComputeStandardObjective
-        double result1 = mymethods.MRComputeStandardObjective( inputPoints, centers);
-        System.out.println("Delta(U,C) = " + result1);
-        double result2 = mymethods.MRComputeFairObjective( inputPoints, centers);
-        System.out.println("Phi(A,B,C) = " + result2);
+        System.out.println("Delta(U,C) = " + mymethods.MRComputeStandardObjective( inputPoints, centers));
+        // result of MRComputeFairObjective
+        System.out.println("Phi(A,B,C) = " + mymethods.MRComputeFairObjective( inputPoints, centers));
 
 
         // check centers
@@ -207,9 +206,8 @@ class mymethods {
                 .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<Integer, Double>> StandObj = StandardObjective.collect();
-        double result = StandObj.get(0)._2();
-        result = result / numPoints;
-        return result;
+
+        return StandObj.get(0)._2() / numPoints;
     }
 
     /*
@@ -217,13 +215,13 @@ class mymethods {
      * MR COMPUTE FAIR OBJECTIVE
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * Implementation:
-     *
-     *
+     * divide the data into two subset and apply the MRComputeStandardObjective function
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
 
         // FORSE è IMPLEMENTATA IN UN MODO LENTO E MALE
         // FORSE è DA USARE IL MAP REDUCE??BHO
+        // però così di sicuro funziona
 
 
         // Filter the RDD into two subsets
@@ -234,9 +232,8 @@ class mymethods {
         double RA = MRComputeStandardObjective(rddA, centroids);
         double RB = MRComputeStandardObjective(rddB, centroids);
 
-        // Combine the results (e.g., average the objectives for fairness)
-        double result = Math.max(RA,RB);
-        return result;
+        // return the max of the two results
+        return Math.max(RA,RB);
     }
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
 
