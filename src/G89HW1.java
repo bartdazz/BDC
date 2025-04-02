@@ -25,12 +25,7 @@ public class G89HW1 {
         Logger.getLogger("org").setLevel(Level.OFF);
         Logger.getLogger("akka").setLevel(Level.OFF);
         // Create Spark configuration with master URL
-        SparkConf conf = new SparkConf()
-                .setAppName("WordCount")
-                .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
-                .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
-                .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));
-        //SparkConf conf = new SparkConf().setAppName("G89HW1");
+        SparkConf conf = new SparkConf().setAppName("G89HW1");
         // I think we don't need setMaster since we'll set it from intellij
         // .setMaster("local[*]"); // Use all CPU cores
 
@@ -155,9 +150,10 @@ public class G89HW1 {
 
         // result of MRComputeStandardObjective
         double result1 = mymethods.MRComputeStandardObjective( inputPoints, centers);
+        System.out.println("Delta(U,C) = " + result1);
+        double result2 = mymethods.MRComputeFairObjective( inputPoints, centers);
+        System.out.println("Phi(A,B,C) = " + result2);
 
-
-        System.out.println("Delta(U,C) =" + result1);
 
         // check centers
         for (Vector c : centers){
@@ -187,7 +183,7 @@ class mymethods {
      *
      * ---- ROUND 2 ----
      * Map each (Point, smaller distance) to (0, smaller distance)
-     * Shuflle and then in the reduce phase sum all the distances
+     * Shuffle and then in the reduce phase sum all the distances
      */
     public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
@@ -215,8 +211,31 @@ class mymethods {
         result = result / numPoints;
         return result;
     }
-    public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
-        double result = 0;
+
+    /*
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * MR COMPUTE FAIR OBJECTIVE
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * Implementation:
+     *
+     *
+     */
+    public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
+
+        // FORSE è IMPLEMENTATA IN UN MODO LENTO E MALE
+        // FORSE è DA USARE IL MAP REDUCE??BHO
+
+
+        // Filter the RDD into two subsets
+        JavaPairRDD<Vector, String> rddA = rdd.filter(pair -> pair._2().equals("A"));
+        JavaPairRDD<Vector, String> rddB = rdd.filter(pair -> pair._2().equals("B"));
+
+        // Compute the standard objective for each subset
+        double RA = MRComputeStandardObjective(rddA, centroids);
+        double RB = MRComputeStandardObjective(rddB, centroids);
+
+        // Combine the results (e.g., average the objectives for fairness)
+        double result = Math.max(RA,RB);
         return result;
     }
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
