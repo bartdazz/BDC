@@ -11,6 +11,8 @@ import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.rdd.RDD;
 
+import org.apache.spark.mllib.clustering.KMeans;
+import org.apache.spark.mllib.clustering.KMeansModel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,9 +39,9 @@ public class G89HW1 {
         sc.setLogLevel("WARN"); // same setting as the example
 
         // Reading the input
-        int L = Integer.parseInt(args[1]);
-        int K = Integer.parseInt(args[2]);
-        int M = Integer.parseInt(args[3]);
+        int L = Integer.parseInt(args[1]);  // number of partitions of the RDD
+        int K = Integer.parseInt(args[2]);  // number of clusters
+        int M = Integer.parseInt(args[3]);  // number of iterations
 
         // read the text file in input
         JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
@@ -141,6 +143,9 @@ public class G89HW1 {
         System.out.println("N = " + numpoints
                 + ", NA = " + classA
                 + ", NB = " + classB);
+
+        KMeansModel clusters = KMeans.train(inputPoints.rdd(), K, M);
+
 
         // Stop SparkContext at the end
         sc.close();
