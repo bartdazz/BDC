@@ -184,7 +184,7 @@ class mymethods {
      * ---- ROUND 2 ----
      * Map each (Point, smaller distance) to (0, smaller distance)
      * Shuffle and then in the reduce phase sum all the distances
-     */
+    */
     public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
@@ -293,12 +293,13 @@ class mymethods {
                     }
                 })
                 // Round 2
+                // in element._2()._1() there is the class, A or B
+                // in element._2()._2() there is the distance
                 .mapToPair((element) -> new Tuple2<>(element._2()._1(), element._2()._2()))
                 .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<String, Double>> StandObj = FairObjective.collect();
-        double fairA = 0.0;
-        double fairB = 0.0;
+        double fairA = 0.0, fairB = 0.0;
         for (Tuple2<String, Double> classSum : StandObj) {
             if (classSum._1().equals("A")) {
                 fairA = classSum._2() / classA;
