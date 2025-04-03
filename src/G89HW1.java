@@ -121,15 +121,14 @@ public class G89HW1 {
 
         // Print the number of elements in each class
         // Each element in the for loop is a Tuple2
-        int classA = 0;
-        int classB = 0;
+        // in classCount._1() there is the class name (key)
+        // in classCount._2() there is the count of elements in that class (value)
+        int classA = 0, classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
-            String className = classCount._1(); // The class name (key)
-            Integer count = classCount._2(); // The count of elements in that class (value)
-            if (Objects.equals(className, "A")) { // object equals corresponds to ==
-                classA = count;
+            if (Objects.equals(classCount._1(), "A")) { // object equals corresponds to ==
+                classA = classCount._2();
             } else {
-                classB = count;
+                classB = classCount._2();
             }
         }
         // print command-line arguments
@@ -253,14 +252,14 @@ class mymethods {
 
         // Print the number of elements in each class
         // Each element in the for loop is a Tuple2
+        // in classCount._1() there is the class name (key)
+        // in classCount._2() there is the count of elements in that class (value)
         int classA = 0, classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
-            String className = classCount._1(); // The class name (key)
-            Integer count = classCount._2(); // The count of elements in that class (value)
-            if (Objects.equals(className, "A")) { // object equals corresponds to ==
-                classA = count;
+            if (Objects.equals(classCount._1(), "A")) { // object equals corresponds to ==
+                classA = classCount._2();
             } else {
-                classB = count;
+                classB = classCount._2();
             }
         }
         // %%%%%%%%%%%%%% End of code to compute NA, NB
@@ -300,7 +299,6 @@ class mymethods {
         List<Tuple2<String, Double>> StandObj = FairObjective.collect();
         double fairA = 0.0;
         double fairB = 0.0;
-
         for (Tuple2<String, Double> classSum : StandObj) {
             if (classSum._1().equals("A")) {
                 fairA = classSum._2() / classA;
