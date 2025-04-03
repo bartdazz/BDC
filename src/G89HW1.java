@@ -27,8 +27,13 @@ public class G89HW1 {
         Logger.getLogger("org").setLevel(Level.OFF);
         Logger.getLogger("akka").setLevel(Level.OFF);
         // Create Spark configuration with master URL
-        SparkConf conf = new SparkConf().setAppName("G89HW1");
-        // I think we don't need setMaster since we'll set it from intellij
+        //SparkConf conf = new SparkConf().setAppName("G89HW1");
+        SparkConf conf = new SparkConf()
+                .setAppName("G89HW1")
+                .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
+                .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
+                .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));
+        // I think we don't need setMaster since we set it from intellij
         // .setMaster("local[*]"); // Use all CPU cores
 
         // Initialize JavaSparkContext
@@ -233,13 +238,6 @@ class mymethods {
      * Then group elements by key and sum all the distances.
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-        /*
-         * RISPETTO A QUELLO DI PRIMA ORA DOBBIAMO PORTARCI DIETRO LE COORDINATE DEL
-         * PUNTO E LA CLASSE
-         * BASTA DEFINIRE BENE L'IMPUT E IMPLEMENTARE UN MAP TO PAIR A SECONDA DI SE HA
-         * 'A' O 'B'
-         * MA NON SO COME SCRIVERLO IN JAVA
-         */
         // Map<Tuple2<Vector, String>, Long> valueCount = rdd.countByValue();
         // %%%%%%%%%%%% Code to compute NA, NB : it can be improved
         JavaPairRDD<String, Integer> classItems; // build a new RDD
@@ -251,15 +249,16 @@ class mymethods {
                 // the reduceByKey phase
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
                 .reduceByKey((x, y) -> x + y); // this sums all the 1 for each class
+                // now in the rdd there are only two Tuple2<>( , )
+                // with A and B as a key and NA and NB as value
 
-        // The function collect takes al the data stored in the RDD and puts
+        // The function collect takes all the data stored in the RDD and puts
         // it into a list; the RDD is sufficiently small to allow us to do so
         List<Tuple2<String, Integer>> classCounts = classItems.collect();
 
         // Print the number of elements in each class
         // Each element in the for loop is a Tuple2
-        int classA = 0;
-        int classB = 0;
+        int classA = 0, classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
             String className = classCount._1(); // The class name (key)
             Integer count = classCount._2(); // The count of elements in that class (value)
