@@ -58,11 +58,8 @@ public class G89HW1 {
                     // splitting the String representing the point and it's class
                     String[] tokens = pointClass.split(",");
 
-                    // getting the length of the splitted array
-                    Integer len = tokens.length;
-
                     // Extracting the sublist regarding the point's coordinates
-                    String[] pointString = Arrays.copyOfRange(tokens, 0, len - 1);
+                    String[] pointString = Arrays.copyOfRange(tokens, 0, 2);
 
                     // Transforming the coordinates into doubles
                     // COPIED FROM CHATGPT : UNDERSTAND BETTER !!!
@@ -81,7 +78,7 @@ public class G89HW1 {
                     Vector point = Vectors.dense(pointDouble);
 
                     // Extracting the demographic class
-                    String demoClass = tokens[len - 1];
+                    String demoClass = tokens[2];
 
                     // Create the ArrayList that will contain the key-value pairs
                     ArrayList<Tuple2<Vector, String>> pairs = new ArrayList<>();
@@ -101,7 +98,7 @@ public class G89HW1 {
         // ATTENTION
         //
         // Maybe this isn't needed !!
-        long lenPoints = inputPoints.count();
+        // long lenPoints = inputPoints.count();
 
         // First Map Reduce part to compute the number of elements belonging to each
         // class
@@ -174,7 +171,7 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * Implementation:
      *
-     * ----- ROUND 1 ----
+     * ---- ROUND 1 ----
      * Map each (Point, demographic class) pair to (Point, d_i) where d_i is the
      * distance between the point and the i-th centroid computed by the LLoyd's
      * algorithm. This produces a larger RDD
@@ -219,7 +216,7 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * Implementation:
      *
-     * ----- ROUND 1 ----
+     * ---- ROUND 1 ----
      * Map each (Point, demographic class) pair to (Point, [demographic class, d_i])
      * where d_i is the squared distance between the point and the i-th centroid
      * computed by the LLoyd's algorithm. This produces a larger RDD.
@@ -309,7 +306,22 @@ class mymethods {
         }
         return Math.max(fairA, fairB);
     }
-
+    /*
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * MR COMPUTE FAIR OBJECTIVE
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * Implementation:
+     *
+     * ---- ROUND 1 ----
+     * Map each (Point, demographic class) pair to (Point, [demographic class, d_i])
+     * where d_i is the squared distance between the point and the i-th centroid
+     * computed by the LLoyd's algorithm. This produces a larger RDD.
+     * Then we group elements by key which is the point (Shuffle phase) and the
+     * reduce phase consists in taking the minimum distance for each point
+     *
+     * ---- ROUND 2 ----
+     * to finish...
+     */
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
 
     }
