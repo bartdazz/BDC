@@ -27,12 +27,7 @@ public class G89HW1 {
         Logger.getLogger("org").setLevel(Level.OFF);
         Logger.getLogger("akka").setLevel(Level.OFF);
         // Create Spark configuration with master URL
-        //SparkConf conf = new SparkConf().setAppName("G89HW1");
-        SparkConf conf = new SparkConf()
-                .setAppName("G89HW1")
-                .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
-                .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
-                .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));
+        SparkConf conf = new SparkConf().setAppName("G89HW1");
         // I think we don't need setMaster since we set it from intellij
         // .setMaster("local[*]"); // Use all CPU cores
 
