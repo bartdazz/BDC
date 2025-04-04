@@ -28,7 +28,7 @@ public class G89HW1 {
         Logger.getLogger("akka").setLevel(Level.OFF);
         // Create Spark configuration with master URL
         SparkConf conf = new SparkConf().setAppName("G89HW1");
-        // I think we don't need setMaster since we'll set it from intellij
+        // I think we don't need setMaster since we set it from intellij
         // .setMaster("local[*]"); // Use all CPU cores
 
         // Initialize JavaSparkContext
@@ -58,11 +58,8 @@ public class G89HW1 {
                     // splitting the String representing the point and it's class
                     String[] tokens = pointClass.split(",");
 
-                    // getting the length of the splitted array
-                    Integer len = tokens.length;
-
                     // Extracting the sublist regarding the point's coordinates
-                    String[] pointString = Arrays.copyOfRange(tokens, 0, len - 1);
+                    String[] pointString = Arrays.copyOfRange(tokens, 0, 2);
 
                     // Transforming the coordinates into doubles
                     // COPIED FROM CHATGPT : UNDERSTAND BETTER !!!
@@ -81,7 +78,7 @@ public class G89HW1 {
                     Vector point = Vectors.dense(pointDouble);
 
                     // Extracting the demographic class
-                    String demoClass = tokens[len - 1];
+                    String demoClass = tokens[2];
 
                     // Create the ArrayList that will contain the key-value pairs
                     ArrayList<Tuple2<Vector, String>> pairs = new ArrayList<>();
@@ -101,7 +98,7 @@ public class G89HW1 {
         // ATTENTION
         //
         // Maybe this isn't needed !!
-        long lenPoints = inputPoints.count();
+        // long lenPoints = inputPoints.count();
 
         // First Map Reduce part to compute the number of elements belonging to each
         // class
@@ -121,15 +118,14 @@ public class G89HW1 {
 
         // Print the number of elements in each class
         // Each element in the for loop is a Tuple2
-        int classA = 0;
-        int classB = 0;
+        // in classCount._1() there is the class name (key)
+        // in classCount._2() there is the count of elements in that class (value)
+        int classA = 0, classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
-            String className = classCount._1(); // The class name (key)
-            Integer count = classCount._2(); // The count of elements in that class (value)
-            if (Objects.equals(className, "A")) { // object equals corresponds to ==
-                classA = count;
+            if (Objects.equals(classCount._1(), "A")) { // object equals corresponds to ==
+                classA = classCount._2();
             } else {
-                classB = count;
+                classB = classCount._2();
             }
         }
         // print command-line arguments
@@ -175,7 +171,7 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * Implementation:
      *
-     * ----- ROUND 1 ----
+     * ---- ROUND 1 ----
      * Map each (Point, demographic class) pair to (Point, d_i) where d_i is the
      * distance between the point and the i-th centroid computed by the LLoyd's
      * algorithm. This produces a larger RDD
@@ -185,7 +181,7 @@ class mymethods {
      * ---- ROUND 2 ----
      * Map each (Point, smaller distance) to (0, smaller distance)
      * Shuffle and then in the reduce phase sum all the distances
-     */
+    */
     public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
@@ -220,7 +216,7 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * Implementation:
      *
-     * ----- ROUND 1 ----
+     * ---- ROUND 1 ----
      * Map each (Point, demographic class) pair to (Point, [demographic class, d_i])
      * where d_i is the squared distance between the point and the i-th centroid
      * computed by the LLoyd's algorithm. This produces a larger RDD.
@@ -233,13 +229,6 @@ class mymethods {
      * Then group elements by key and sum all the distances.
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-        /*
-         * RISPETTO A QUELLO DI PRIMA ORA DOBBIAMO PORTARCI DIETRO LE COORDINATE DEL
-         * PUNTO E LA CLASSE
-         * BASTA DEFINIRE BENE L'IMPUT E IMPLEMENTARE UN MAP TO PAIR A SECONDA DI SE HA
-         * 'A' O 'B'
-         * MA NON SO COME SCRIVERLO IN JAVA
-         */
         // Map<Tuple2<Vector, String>, Long> valueCount = rdd.countByValue();
         // %%%%%%%%%%%% Code to compute NA, NB : it can be improved
         JavaPairRDD<String, Integer> classItems; // build a new RDD
@@ -251,22 +240,23 @@ class mymethods {
                 // the reduceByKey phase
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
                 .reduceByKey((x, y) -> x + y); // this sums all the 1 for each class
+                // now in the rdd there are only two Tuple2<>( , )
+                // with A and B as a key and NA and NB as value
 
-        // The function collect takes al the data stored in the RDD and puts
+        // The function collect takes all the data stored in the RDD and puts
         // it into a list; the RDD is sufficiently small to allow us to do so
         List<Tuple2<String, Integer>> classCounts = classItems.collect();
 
         // Print the number of elements in each class
         // Each element in the for loop is a Tuple2
-        int classA = 0;
-        int classB = 0;
+        // in classCount._1() there is the class name (key)
+        // in classCount._2() there is the count of elements in that class (value)
+        int classA = 0, classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
-            String className = classCount._1(); // The class name (key)
-            Integer count = classCount._2(); // The count of elements in that class (value)
-            if (Objects.equals(className, "A")) { // object equals corresponds to ==
-                classA = count;
+            if (Objects.equals(classCount._1(), "A")) { // object equals corresponds to ==
+                classA = classCount._2();
             } else {
-                classB = count;
+                classB = classCount._2();
             }
         }
         // %%%%%%%%%%%%%% End of code to compute NA, NB
@@ -300,13 +290,13 @@ class mymethods {
                     }
                 })
                 // Round 2
+                // in element._2()._1() there is the class, A or B
+                // in element._2()._2() there is the distance
                 .mapToPair((element) -> new Tuple2<>(element._2()._1(), element._2()._2()))
                 .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<String, Double>> StandObj = FairObjective.collect();
-        double fairA = 0.0;
-        double fairB = 0.0;
-
+        double fairA = 0.0, fairB = 0.0;
         for (Tuple2<String, Double> classSum : StandObj) {
             if (classSum._1().equals("A")) {
                 fairA = classSum._2() / classA;
@@ -316,7 +306,22 @@ class mymethods {
         }
         return Math.max(fairA, fairB);
     }
-
+    /*
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * MR COMPUTE FAIR OBJECTIVE
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * Implementation:
+     *
+     * ---- ROUND 1 ----
+     * Map each (Point, demographic class) pair to (Point, [demographic class, d_i])
+     * where d_i is the squared distance between the point and the i-th centroid
+     * computed by the LLoyd's algorithm. This produces a larger RDD.
+     * Then we group elements by key which is the point (Shuffle phase) and the
+     * reduce phase consists in taking the minimum distance for each point
+     *
+     * ---- ROUND 2 ----
+     * to finish...
+     */
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
 
     }
