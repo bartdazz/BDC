@@ -330,9 +330,9 @@ class mymethods {
      * to finish...
      */
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-        JavaPairRDD<String, Vector> Stat;
+        JavaPairRDD<Vector, int[]> stat;
 
-        Stat = rdd
+        stat = rdd
                 .flatMapToPair((element) -> {
                     Vector point = element._1();
                     String demoClass = element._2();
@@ -359,19 +359,21 @@ class mymethods {
                 .flatMapToPair((element) -> {
                     String demoClass = element._1()._2();
                     Vector center = element._2()._1();
-                    Vector binaryClass;
+                    int[] binaryClass;
 
                     if (demoClass == "A") {
-                        binaryClass = Vectors.dense(new double[] { 1, 0 });
+                        binaryClass = new int[] {1, 0};
                     } else {
-                        binaryClass = Vectors.dense(new double[] { 0, 1 });
+                        binaryClass = new int[] {0, 1};
                     }
 
-                    ArrayList<Tuple2<Vector, Vector>> centerBinaryClass = new ArrayList<>();
-                    centerBinaryClass.add(new Tuple2<Vector, Vector>(center, binaryClass));
+                    ArrayList<Tuple2<Vector, int[]>> centerBinaryClass = new ArrayList<>();
+                    centerBinaryClass.add(new Tuple2<Vector, int[]>(center, binaryClass));
                     return centerBinaryClass.iterator();
                 })
-                .reduceByKey((x, y) -> x + y);
+                .reduceByKey((x, y) -> {
+            return new int[] {x[0] + y[0], x[1] + y[1]};
+        });
     }
 
 }
