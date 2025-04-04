@@ -336,7 +336,7 @@ class mymethods {
                 .flatMapToPair((element) -> {
                     Vector point = element._1();
                     String demoClass = element._2();
-                    ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Double, Vector>>> pointClassDistCenter = new ArrayList<>();
+                    ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>> pointClassDistCenter = new ArrayList<>();
                     for (Vector center : centroids) {
                         // compute the distance between the selected center and the point
                         double distance = Vectors.sqdist(point, center);
@@ -346,7 +346,32 @@ class mymethods {
                                 new Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>(pointClass, centerDist));
                     }
                     return pointClassDistCenter.iterator();
-                });
+                })
+                .reduceByKey((x, y) -> {
+                    Double distanceX = x._2();
+                    Double distanceY = y._2();
+                    if (distanceX < distanceY) {
+                        return x;
+                    } else {
+                        return y;
+                    }
+                })
+                .flatMapToPair((element) -> {
+                    String demoClass = element._1()._2();
+                    Vector center = element._2()._1();
+                    Vector binaryClass;
+
+                    if (demoClass == "A") {
+                        binaryClass = Vectors.dense(new double[] { 1, 0 });
+                    } else {
+                        binaryClass = Vectors.dense(new double[] { 0, 1 });
+                    }
+
+                    ArrayList<Tuple2<Vector, Vector>> centerBinaryClass = new ArrayList<>();
+                    centerBinaryClass.add(new Tuple2<Vector, Vector>(center, binaryClass));
+                    return centerBinaryClass.iterator();
+                })
+                .reduceByKey((x, y) -> x + y);
     }
 
 }
