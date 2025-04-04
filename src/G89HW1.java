@@ -358,7 +358,7 @@ class mymethods {
                     Vector center = element._2()._1();
                     int[] binaryClass;
 
-                    if (demoClass == "A") {
+                    if (demoClass.equals("A")) {
                         binaryClass = new int[] { 1, 0 };
                     } else {
                         binaryClass = new int[] { 0, 1 };
