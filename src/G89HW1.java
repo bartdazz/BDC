@@ -292,6 +292,11 @@ class mymethods {
                 // Round 2
                 // in element._2()._1() there is the class, A or B
                 // in element._2()._2() there is the distance
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // Maybe here we can count the length of the lists to know NA and NB 
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 .mapToPair((element) -> new Tuple2<>(element._2()._1(), element._2()._2()))
                 .reduceByKey((x, y) -> x + y);
 
