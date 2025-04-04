@@ -154,10 +154,7 @@ public class G89HW1 {
         // result of MRComputeFairObjective
         System.out.println("Phi(A,B,C) = " + mymethods.MRComputeFairObjective(inputPoints, centers));
 
-        // check centers
-        for (Vector c : centers) {
-            System.out.println(c);
-        }
+        mymethods.MRPrintStatistics(inputPoints, centers);
 
         // Stop SparkContext at the end
         sc.close();
@@ -362,9 +359,9 @@ class mymethods {
                     int[] binaryClass;
 
                     if (demoClass == "A") {
-                        binaryClass = new int[] {1, 0};
+                        binaryClass = new int[] { 1, 0 };
                     } else {
-                        binaryClass = new int[] {0, 1};
+                        binaryClass = new int[] { 0, 1 };
                     }
 
                     ArrayList<Tuple2<Vector, int[]>> centerBinaryClass = new ArrayList<>();
@@ -372,8 +369,15 @@ class mymethods {
                     return centerBinaryClass.iterator();
                 })
                 .reduceByKey((x, y) -> {
-            return new int[] {x[0] + y[0], x[1] + y[1]};
-        });
+                    return new int[] { x[0] + y[0], x[1] + y[1] };
+                });
+        List<Tuple2<Vector, int[]>> statList = stat.collect();
+        for (int i = 0; i < statList.size(); i++) {
+            System.out.println("i = " + i
+                    + ", center = " + statList.get(i)._1()
+                    + ", NA" + i + " = " + statList.get(i)._2()[0]
+                    + ", NB" + i + " = " + statList.get(i)._2()[1]);
+        }
     }
 
 }
