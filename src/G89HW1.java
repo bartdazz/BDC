@@ -6,6 +6,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
+import scala.Tuple3;
 import spire.random.Seed;
 
 import org.apache.spark.mllib.linalg.Vector;
@@ -181,7 +182,7 @@ class mymethods {
      * ---- ROUND 2 ----
      * Map each (Point, smaller distance) to (0, smaller distance)
      * Shuffle and then in the reduce phase sum all the distances
-    */
+     */
     public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
@@ -240,8 +241,8 @@ class mymethods {
                 // the reduceByKey phase
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
                 .reduceByKey((x, y) -> x + y); // this sums all the 1 for each class
-                // now in the rdd there are only two Tuple2<>( , )
-                // with A and B as a key and NA and NB as value
+        // now in the rdd there are only two Tuple2<>( , )
+        // with A and B as a key and NA and NB as value
 
         // The function collect takes all the data stored in the RDD and puts
         // it into a list; the RDD is sufficiently small to allow us to do so
@@ -292,11 +293,11 @@ class mymethods {
                 // Round 2
                 // in element._2()._1() there is the class, A or B
                 // in element._2()._2() there is the distance
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // Maybe here we can count the length of the lists to know NA and NB 
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                // Maybe here we can count the length of the lists to know NA and NB
+                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 .mapToPair((element) -> new Tuple2<>(element._2()._1(), element._2()._2()))
                 .reduceByKey((x, y) -> x + y);
 
@@ -311,6 +312,7 @@ class mymethods {
         }
         return Math.max(fairA, fairB);
     }
+
     /*
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * MR COMPUTE FAIR OBJECTIVE
@@ -329,9 +331,22 @@ class mymethods {
      */
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         JavaPairRDD<String, Vector> Stat;
-        
+
         Stat = rdd
-        .flatMapToPair(f)
+                .flatMapToPair((element) -> {
+                    Vector point = element._1();
+                    String demoClass = element._2();
+                    ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Double, Vector>>> pointClassDistCenter = new ArrayList<>();
+                    for (Vector center : centroids) {
+                        // compute the distance between the selected center and the point
+                        double distance = Vectors.sqdist(point, center);
+                        Tuple2<Vector, String> pointClass = new Tuple2<Vector, String>(point, demoClass);
+                        Tuple2<Vector, Double> centerDist = new Tuple2<Vector, Double>(center, distance);
+                        pointClassDistCenter.add(
+                                new Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>(pointClass, centerDist));
+                    }
+                    return pointClassDistCenter.iterator();
+                });
     }
 
 }
