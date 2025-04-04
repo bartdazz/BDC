@@ -328,7 +328,10 @@ class mymethods {
      * to finish...
      */
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-
+        JavaPairRDD<String, Vector> Stat;
+        
+        Stat = rdd
+        .flatMapToPair(f)
     }
 
 }
