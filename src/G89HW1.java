@@ -257,6 +257,7 @@ class mymethods {
                 .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<Integer, Double>> StandObj = FairObjective.collect();
+        return 0;
     }
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids){
 
