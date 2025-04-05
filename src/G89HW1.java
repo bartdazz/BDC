@@ -312,22 +312,24 @@ class mymethods {
 
     /*
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     * MR COMPUTE FAIR OBJECTIVE
+     * MR Print Statistics
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * Implementation:
      *
      * ---- ROUND 1 ----
-     * Map each (Point, demographic class) pair to (Point, [demographic class, d_i])
-     * where d_i is the squared distance between the point and the i-th centroid
+     * Map each (Point, demographic class) pair to ([ Point, demographic class] , [ center-i, d_i])
+     * where d_i is the squared distance between the point and the center-i
      * computed by the LLoyd's algorithm. This produces a larger RDD.
      * Then we group elements by key which is the point (Shuffle phase) and the
      * reduce phase consists in taking the minimum distance for each point
      *
      * ---- ROUND 2 ----
-     * to finish...
+     * Map each ([ Point, demographic class] , [ center-i, d_i]) to ( center-i, [ k, h])
+     * where (k,h) = (1,0) if the demographic class is "A" and (k,h) = (0,1) otherwise.
+     * Then we group the element  by key and sum all the vector (1,0) and (0,1).
      */
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-        JavaPairRDD<Vector, int[]> stat;
+        JavaPairRDD<Vector, int[]> stat; // output RDD
 
         stat = rdd
                 .flatMapToPair((element) -> {
