@@ -145,7 +145,7 @@ public class G89HW1 {
         // initialize and train the model
         KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M,
                 "k-means||", // Initialization mode ("random" or "k-means||")
-                new Random(24).nextLong()); // Set a specific seed)
+                new Random(24).nextLong()); // Set a specific seed
         // get centers
         Vector[] centers = clusters.clusterCenters();
 
@@ -153,7 +153,7 @@ public class G89HW1 {
         System.out.println("Delta(U,C) = " + mymethods.MRComputeStandardObjective(inputPoints, centers));
         // result of MRComputeFairObjective
         System.out.println("Phi(A,B,C) = " + mymethods.MRComputeFairObjective(inputPoints, centers));
-
+        // run MRPrintStatistics
         mymethods.MRPrintStatistics(inputPoints, centers);
 
         // Stop SparkContext at the end
@@ -333,8 +333,10 @@ class mymethods {
 
         stat = rdd
                 .flatMapToPair((element) -> {
-                    Vector point = element._1();
-                    String demoClass = element._2();
+                    Vector point = element._1(); // point
+                    String demoClass = element._2(); // Class of the element (A or B)
+                    // output of the function
+                    // [ Point, demographic class] , [ center-i, d_i])
                     ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>> pointClassDistCenter = new ArrayList<>();
                     for (Vector center : centroids) {
                         // compute the distance between the selected center and the point
@@ -355,22 +357,25 @@ class mymethods {
                         return y;
                     }
                 })
+                // Round 2
                 .flatMapToPair((element) -> {
+                    // Class of the element (A or B)
                     String demoClass = element._1()._2();
+                    // Center
                     Vector center = element._2()._1();
                     int[] binaryClass;
 
                     if (demoClass.equals("A")) {
                         binaryClass = new int[] { 1, 0 };
-                    } else {
+                    } else { // if demoClass == "B"
                         binaryClass = new int[] { 0, 1 };
                     }
-
                     ArrayList<Tuple2<Vector, int[]>> centerBinaryClass = new ArrayList<>();
                     centerBinaryClass.add(new Tuple2<Vector, int[]>(center, binaryClass));
                     return centerBinaryClass.iterator();
                 })
                 .reduceByKey((x, y) -> {
+                    // sum all the vectors
                     return new int[] { x[0] + y[0], x[1] + y[1] };
                 });
         List<Tuple2<Vector, int[]>> statList = stat.collect();
