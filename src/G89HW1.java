@@ -94,13 +94,6 @@ public class G89HW1 {
                     return pairs.iterator();
                 });
 
-        // Doing an action on the RDD to check if everything is ok
-        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-        // ATTENTION
-        //
-        // Maybe this isn't needed !!
-        // long lenPoints = inputPoints.count();
-
         // First Map Reduce part to compute the number of elements belonging to each
         // class
         JavaPairRDD<String, Integer> classItems; // build a new RDD
@@ -228,6 +221,7 @@ class mymethods {
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         // Map<Tuple2<Vector, String>, Long> valueCount = rdd.countByValue();
+        //
         // %%%%%%%%%%%% Code to compute NA, NB : it can be improved
         JavaPairRDD<String, Integer> classItems; // build a new RDD
         classItems = rdd
