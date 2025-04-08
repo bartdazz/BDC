@@ -136,9 +136,8 @@ public class G89HW1 {
                 + ", NB = " + classB);
 
         // initialize and train the model
-        KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M,
-                "k-means||", // Initialization mode ("random" or "k-means||")
-                new Random(24).nextLong()); // Set a specific seed
+        KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
+                
         // get centers
         Vector[] centers = clusters.clusterCenters();
 
