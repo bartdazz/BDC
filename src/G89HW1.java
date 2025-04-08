@@ -21,20 +21,23 @@ public class G89HW1 {
     public static void main(String[] args) throws IOException {
 
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        // CHECKING NUMBER OF CMD LINE PARAMETERS
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+        if (args.length != 4) {
+            throw new IllegalArgumentException("USAGE: file_path, num_partition, num_centers, num_iteration");
+        }
+
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         // SPARK SETUP
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
-        // Disable Spark and Akka logs
-        Logger.getLogger("org").setLevel(Level.OFF);
-        Logger.getLogger("akka").setLevel(Level.OFF);
-        // Create Spark configuration with master URL
+        // Create Spark configuration
         SparkConf conf = new SparkConf().setAppName("G89HW1");
-        // I think we don't need setMaster since we set it from intellij
-        // .setMaster("local[*]"); // Use all CPU cores
 
         // Initialize JavaSparkContext
         JavaSparkContext sc = new JavaSparkContext(conf);
-        sc.setLogLevel("WARN"); // same setting as the example
+        sc.setLogLevel("WARN");
 
         // Reading the input
         int L = Integer.parseInt(args[1]); // number of partitions of the RDD
@@ -43,7 +46,6 @@ public class G89HW1 {
 
         // read the text file in input
         JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
-
         // .repartition is used to tell spark to divide the input in L partitions
         // inside the RDD
 
@@ -63,13 +65,6 @@ public class G89HW1 {
                     String[] pointString = Arrays.copyOfRange(tokens, 0, 2);
 
                     // Transforming the coordinates into doubles
-                    // COPIED FROM CHATGPT : UNDERSTAND BETTER !!!
-                    /*
-                     * could also do something like :
-                     * for (int i = 0; i < sarray.length; i++) {
-                     * values[i] = Double.parseDouble(sarray[i]);
-                     * }
-                     */
                     double[] pointDouble = Arrays
                             .stream(pointString)
                             .mapToDouble(Double::parseDouble)
@@ -116,16 +111,13 @@ public class G89HW1 {
         // in classCount._2() there is the count of elements in that class (value)
         int classA = 0, classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
-            if (Objects.equals(classCount._1(), "A")) { // object equals corresponds to ==
+            if (Objects.equals(classCount._1(), "A")) {
                 classA = classCount._2();
             } else {
                 classB = classCount._2();
             }
         }
         // print command-line arguments
-        /*
-         * print all the output here otherwise spark prints its log info in the middle
-         */
         System.out.println("Input file = " + args[0]
                 + ", L = " + L
                 + ", K = " + K
@@ -159,7 +151,6 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * MR COMPUTE STANDARD OBJECTIVE
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     * Implementation:
      *
      * ---- ROUND 1 ----
      * Map each (Point, demographic class) pair to (Point, d_i) where d_i is the
@@ -191,8 +182,6 @@ class mymethods {
 
                 // Round 2
                 .mapToPair((element) -> new Tuple2<>(0, element._2()))
-                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                // IMPROVE THIS REDUCE PHASE WITH THE RDD PARTITIONS
                 .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<Integer, Double>> StandObj = StandardObjective.collect();
@@ -204,7 +193,6 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * MR COMPUTE FAIR OBJECTIVE
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     * Implementation:
      *
      * ---- ROUND 1 ----
      * Map each (Point, demographic class) pair to (Point, [demographic class, d_i])
@@ -219,20 +207,12 @@ class mymethods {
      * Then group elements by key and sum all the distances.
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-        // Map<Tuple2<Vector, String>, Long> valueCount = rdd.countByValue();
-        //
-        // %%%%%%%%%%%% Code to compute NA, NB : it can be improved
-        JavaPairRDD<String, Integer> classItems; // build a new RDD
+
+        // %%%%%%%%%%%% Code to compute NA, NB
+        JavaPairRDD<String, Integer> classItems;
         classItems = rdd
-                // element is a key-value pair
-                // with this map we want to set as key the demographic class
-                // so the second element of the Tuple2
-                // and as value we set 1 that then will be summed up in
-                // the reduceByKey phase
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
-                .reduceByKey((x, y) -> x + y); // this sums all the 1 for each class
-        // now in the rdd there are only two Tuple2<>( , )
-        // with A and B as a key and NA and NB as value
+                .reduceByKey((x, y) -> x + y);
 
         // The function collect takes all the data stored in the RDD and puts
         // it into a list; the RDD is sufficiently small to allow us to do so
@@ -244,7 +224,7 @@ class mymethods {
         // in classCount._2() there is the count of elements in that class (value)
         int classA = 0, classB = 0;
         for (Tuple2<String, Integer> classCount : classCounts) {
-            if (Objects.equals(classCount._1(), "A")) { // object equals corresponds to ==
+            if (Objects.equals(classCount._1(), "A")) {
                 classA = classCount._2();
             } else {
                 classB = classCount._2();
@@ -259,8 +239,8 @@ class mymethods {
 
         // Round 1
         FairObjective = rdd.flatMapToPair((pair) -> {
-            Vector point = pair._1(); // point
-            String demoClass = pair._2(); // demographic class
+            Vector point = pair._1();       // point
+            String demoClass = pair._2();   // demographic class
             for (Vector center : centroids) {
                 // compute the distance between the selected center and the point
                 double distance = Vectors.sqdist(point, center);
@@ -283,11 +263,6 @@ class mymethods {
                 // Round 2
                 // in element._2()._1() there is the class, A or B
                 // in element._2()._2() there is the distance
-                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                // Maybe here we can count the length of the lists to know NA and NB
-                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 .mapToPair((element) -> new Tuple2<>(element._2()._1(), element._2()._2()))
                 .reduceByKey((x, y) -> x + y);
 
@@ -307,7 +282,6 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * MR Print Statistics
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     * Implementation:
      *
      * ---- ROUND 1 ----
      * Map each (Point, demographic class) pair to ([ Point, demographic class] , [ center-i, d_i])
@@ -326,10 +300,10 @@ class mymethods {
 
         stat = rdd
                 .flatMapToPair((element) -> {
-                    Vector point = element._1(); // point
-                    String demoClass = element._2(); // Class of the element (A or B)
+                    Vector point = element._1();        // point
+                    String demoClass = element._2();    // Class of the element (A or B)
                     // output of the function
-                    // [ Point, demographic class] , [ center-i, d_i])
+                    // ([ Point, demographic class] , [ center-i, d_i])
                     ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>> pointClassDistCenter = new ArrayList<>();
                     for (Vector center : centroids) {
                         // compute the distance between the selected center and the point
@@ -350,6 +324,7 @@ class mymethods {
                         return y;
                     }
                 })
+
                 // Round 2
                 .flatMapToPair((element) -> {
                     // Class of the element (A or B)
