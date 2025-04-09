@@ -316,18 +316,18 @@ class mymethods {
                         pointClassDistCenter.add(
                                 new Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>(pointClass, centerDist));
                     }
-                    return pointClassDistCenter.iterator();
-                })
-                .reduceByKey((x, y) -> {
-                    Double distanceX = x._2();
-                    Double distanceY = y._2();
-                    if (distanceX < distanceY) {
-                        return x;
-                    } else {
-                        return y;
-                    }
-                })
+                    ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>> pointClassDistCenterOut = new ArrayList<>();
+                    pointClassDistCenterOut.add(
+                            new Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>(pointClassDistCenter.get(0)._1(),
+                                    pointClassDistCenter.get(0)._2()));
 
+                    for (Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>> el : pointClassDistCenter) {
+                        if (el._2()._2() > pointClassDistCenterOut.get(0)._2()._2()) {
+                            pointClassDistCenterOut.set(0, el);
+                        }
+                    }
+                    return pointClassDistCenterOut.iterator();
+                })
                 // Round 2
                 .flatMapToPair((element) -> {
                     // Class of the element (A or B)
