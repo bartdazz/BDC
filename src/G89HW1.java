@@ -181,7 +181,7 @@ class mymethods {
                 // compute the distance between the selected center and the point
                 double distance = Vectors.sqdist(point, center);
 
-                // check wheter to update the min distance or not
+                // check whether to update the min distance or not
                 if (distance < minDistance) {
                     minDistance = distance;
                 }
