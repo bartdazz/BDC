@@ -34,7 +34,6 @@ public class G89HW1 {
 
         // Create Spark configuration
         SparkConf conf = new SparkConf().setAppName("G89HW1");
-
         // Initialize JavaSparkContext
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("WARN");
@@ -244,10 +243,11 @@ class mymethods {
         // Round 1
         long numPoints = rdd.count();
         JavaPairRDD<String, Double> FairObjective; // output RDD
-        ArrayList<Tuple2<Vector, Tuple2<String, Double>>> pointDistancesClass = new ArrayList<>();
 
         // Round 1
         FairObjective = rdd.flatMapToPair((pair) -> {
+            ArrayList<Tuple2<Vector, Tuple2<String, Double>>> pointDistancesClass = new ArrayList<>();
+            ArrayList<Tuple2<Vector, Tuple2<String, Double>>> pointDistancesClassOut = new ArrayList<>();
             Vector point = pair._1();       // point
             String demoClass = pair._2();   // demographic class
             for (Vector center : centroids) {
@@ -257,18 +257,16 @@ class mymethods {
                 Tuple2<String, Double> classDistance = new Tuple2<String, Double>(demoClass, distance);
                 pointDistancesClass.add(new Tuple2<Vector, Tuple2<String, Double>>(point, classDistance));
             }
-            return pointDistancesClass.iterator();
+            pointDistancesClassOut.add(new Tuple2<Vector, Tuple2<String, Double>>(
+                    pointDistancesClass.get(0)._1(), pointDistancesClass.get(0)._2()));
+            for( Tuple2<Vector, Tuple2<String, Double>> el : pointDistancesClass  ){
+                if (el._2()._2() < pointDistancesClassOut.get(0)._2()._2()){
+                    pointDistancesClassOut.set(0, el);
+                }
+            }
+
+            return pointDistancesClassOut.iterator();
         })
-                .reduceByKey((x, y) -> {
-                    // return the tuple with the smaller distance
-                    Double distanceX = x._2();
-                    Double distanceY = y._2();
-                    if (distanceX < distanceY) {
-                        return x;
-                    } else {
-                        return y;
-                    }
-                })
                 // Round 2
                 // in element._2()._1() there is the class, A or B
                 // in element._2()._2() there is the distance
