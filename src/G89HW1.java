@@ -328,7 +328,7 @@ class mymethods {
                                     pointClassDistCenter.get(0)._2()));
 
                     for (Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>> el : pointClassDistCenter) {
-                        if (el._2()._2() > pointClassDistCenterOut.get(0)._2()._2()) {
+                        if (el._2()._2() < pointClassDistCenterOut.get(0)._2()._2()) {
                             pointClassDistCenterOut.set(0, el);
                         }
                     }
