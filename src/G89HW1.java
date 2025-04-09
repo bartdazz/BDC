@@ -247,7 +247,7 @@ class mymethods {
         // Round 1
         FairObjective = rdd.flatMapToPair((pair) -> {
             ArrayList<Tuple2<Vector, Tuple2<String, Double>>> pointDistancesClass = new ArrayList<>();
-            ArrayList<Tuple2<Vector, Tuple2<String, Double>>> pointDistancesClassOut = new ArrayList<>();
+            Tuple2<Vector, Tuple2<String, Double>> pointDistancesClassOut;
             Vector point = pair._1();       // point
             String demoClass = pair._2();   // demographic class
             for (Vector center : centroids) {
@@ -257,20 +257,20 @@ class mymethods {
                 Tuple2<String, Double> classDistance = new Tuple2<String, Double>(demoClass, distance);
                 pointDistancesClass.add(new Tuple2<Vector, Tuple2<String, Double>>(point, classDistance));
             }
-            pointDistancesClassOut.add(new Tuple2<Vector, Tuple2<String, Double>>(
-                    pointDistancesClass.get(0)._1(), pointDistancesClass.get(0)._2()));
+            pointDistancesClassOut = new Tuple2<Vector, Tuple2<String, Double>>(
+                    pointDistancesClass.get(0)._1(), pointDistancesClass.get(0)._2());
             for( Tuple2<Vector, Tuple2<String, Double>> el : pointDistancesClass  ){
-                if (el._2()._2() < pointDistancesClassOut.get(0)._2()._2()){
-                    pointDistancesClassOut.set(0, el);
+                if (el._2()._2() < pointDistancesClassOut._2()._2()){
+                    pointDistancesClassOut = new Tuple2<Vector, Tuple2<String, Double>>(el._1(),el._2());
                 }
             }
-
-            return pointDistancesClassOut.iterator();
+                    // in element._2()._1() there is the class, A or B
+                    // in element._2()._2() there is the distance
+            ArrayList<Tuple2<String, Double >> output = new ArrayList<>();
+            output.add(new Tuple2<String, Double >(pointDistancesClassOut._2()._1(),
+                    pointDistancesClassOut._2()._2()));
+            return output.iterator();
         })
-                // Round 2
-                // in element._2()._1() there is the class, A or B
-                // in element._2()._2() there is the distance
-                .mapToPair((element) -> new Tuple2<>(element._2()._1(), element._2()._2()))
                 .reduceByKey((x, y) -> x + y);
 
         List<Tuple2<String, Double>> StandObj = FairObjective.collect();
