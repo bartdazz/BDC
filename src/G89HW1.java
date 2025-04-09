@@ -169,13 +169,13 @@ class mymethods {
     public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
         JavaPairRDD<Integer, Double> StandardObjective;
-        
-        ArrayList<Tuple2<Integer, Double>> distances = new ArrayList<>();
+
 
         // Round 1
         StandardObjective = rdd.flatMapToPair((pair) -> {
             Vector point = pair._1();
             // initialize the min distance
+            ArrayList<Tuple2<Integer, Double>> distances = new ArrayList<>();
             Double minDistance = Vectors.sqdist(point, centroids[0]);
             for (Vector center : centroids) {
                 // compute the distance between the selected center and the point
