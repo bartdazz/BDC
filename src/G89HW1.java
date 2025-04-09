@@ -61,8 +61,11 @@ public class G89HW1 {
                     // splitting the String representing the point and it's class
                     String[] tokens = pointClass.split(",");
 
+                    // getting the length of the array tokens
+                    Integer len = tokens.length;
+
                     // Extracting the sublist regarding the point's coordinates
-                    String[] pointString = Arrays.copyOfRange(tokens, 0, 2);
+                    String[] pointString = Arrays.copyOfRange(tokens, 0, len - 1);
 
                     // Transforming the coordinates into doubles
                     double[] pointDouble = Arrays
@@ -74,7 +77,7 @@ public class G89HW1 {
                     Vector point = Vectors.dense(pointDouble);
 
                     // Extracting the demographic class
-                    String demoClass = tokens[2];
+                    String demoClass = tokens[len - 1];
 
                     // Create the ArrayList that will contain the key-value pairs
                     ArrayList<Tuple2<Vector, String>> pairs = new ArrayList<>();
