@@ -155,15 +155,11 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      *
      * ---- ROUND 1 ----
-     * Map each (Point, demographic class) pair to (Point, d_i) where d_i is the
-     * distance between the point and the i-th centroid computed by the LLoyd's
-     * algorithm. This produces a larger RDD
-     * Then we group elements by key which is the point (Shuffle phase) and the
-     * reduce phase consists in taking the minimum distance for each point
-     *
-     * ---- ROUND 2 ----
-     * Map each (Point, smaller distance) to (0, smaller distance)
-     * Shuffle and then in the reduce phase sum all the distances
+     * Map each (Point, demographic class) pair to (0, distance(point, nearest center)).
+     * Firstly it computes the distance between the point and all the centroids computed
+     * by the LLoyd's algorithm, then it choose the smallest
+     * distance and map each point to (0,smaller distance).
+     * In the reduce phase we group th element by key and sum all the distances.
      */
     public static double MRComputeStandardObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         long numPoints = rdd.count();
@@ -201,22 +197,19 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      * MR COMPUTE FAIR OBJECTIVE
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     *
-     * ---- ROUND 1 ----
-     * Map each (Point, demographic class) pair to (Point, [demographic class, d_i])
-     * where d_i is the squared distance between the point and the i-th centroid
-     * computed by the LLoyd's algorithm. This produces a larger RDD.
-     * Then we group elements by key which is the point (Shuffle phase) and the
-     * reduce phase consists in taking the minimum distance for each point
-     *
-     * ---- ROUND 2 ----
-     * In the map phase set as key the demographic class, discarding the point and
-     * set as value the minimum distance of the point from the centroids.
+     * We compute NA and NB by mapping each point to (class of the point, 1), then we group by
+     * key and sum the elements.
+     * ---- Round 1 ----
+     * Map each (Point, demographic class) pair to (class of the point, smaller distance).
+     * It computes the distance between the point and all the centroids computed by the LLoyd's algorithm,
+     * then it choose the smallest distance and map each point to (class of the point, smaller distance).
      * Then group elements by key and sum all the distances.
+     * The output is a rdd with for each two classes the sum of the distances.
      */
     public static double MRComputeFairObjective(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
-
-        // %%%%%%%%%%%% Code to compute NA, NB
+        // %%%%%%%%%%%%%%%%%%%%%%
+        // Code to compute NA, NB
+        // %%%%%%%%%%%%%%%%%%%%%%
         JavaPairRDD<String, Integer> classItems;
         classItems = rdd
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
@@ -238,13 +231,14 @@ class mymethods {
                 classB = classCount._2();
             }
         }
-        // %%%%%%%%%%%%%% End of code to compute NA, NB
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // End of code to compute NA, NB
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
         // Round 1
-        long numPoints = rdd.count();
         JavaPairRDD<String, Double> FairObjective; // output RDD
 
-        // Round 1
         FairObjective = rdd.flatMapToPair((pair) -> {
             ArrayList<Tuple2<Vector, Tuple2<String, Double>>> pointDistancesClass = new ArrayList<>();
             Tuple2<Vector, Tuple2<String, Double>> pointDistancesClassOut;
@@ -257,8 +251,10 @@ class mymethods {
                 Tuple2<String, Double> classDistance = new Tuple2<String, Double>(demoClass, distance);
                 pointDistancesClass.add(new Tuple2<Vector, Tuple2<String, Double>>(point, classDistance));
             }
+            // initialize the variable
             pointDistancesClassOut = new Tuple2<Vector, Tuple2<String, Double>>(
                     pointDistancesClass.get(0)._1(), pointDistancesClass.get(0)._2());
+            // find the smallest distance
             for( Tuple2<Vector, Tuple2<String, Double>> el : pointDistancesClass  ){
                 if (el._2()._2() < pointDistancesClassOut._2()._2()){
                     pointDistancesClassOut = new Tuple2<Vector, Tuple2<String, Double>>(el._1(),el._2());
@@ -267,6 +263,7 @@ class mymethods {
                     // in element._2()._1() there is the class, A or B
                     // in element._2()._2() there is the distance
             ArrayList<Tuple2<String, Double >> output = new ArrayList<>();
+                    //(class of the point, smaller distance)
             output.add(new Tuple2<String, Double >(pointDistancesClassOut._2()._1(),
                     pointDistancesClassOut._2()._2()));
             return output.iterator();
@@ -291,16 +288,12 @@ class mymethods {
      * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      *
      * ---- ROUND 1 ----
-     * Map each (Point, demographic class) pair to ([ Point, demographic class] , [ center-i, d_i])
-     * where d_i is the squared distance between the point and the center-i
-     * computed by the LLoyd's algorithm. This produces a larger RDD.
-     * Then we group elements by key which is the point (Shuffle phase) and the
-     * reduce phase consists in taking the minimum distance for each point
-     *
-     * ---- ROUND 2 ----
-     * Map each ([ Point, demographic class] , [ center-i, d_i]) to ( center-i, [ k, h])
+     * Map each (Point, demographic class) pair to (coordinates of the nearest center , (k, h) )
      * where (k,h) = (1,0) if the demographic class is "A" and (k,h) = (0,1) otherwise.
-     * Then we group the element  by key and sum all the vector (1,0) and (0,1).
+     * It computes the distance between the point and all the centroids computed by the LLoyd's algorithm,
+     * then it choose the smallest distance and map each point to (coordinates of the nearest center , (k, h) ).
+     * In the reduce phase we group the elements by key and sum all (k,h).
+     * The output is a rdd with (center-i, NAi, NBi) for all centers.
      */
     public static void MRPrintStatistics(JavaPairRDD<Vector, String> rdd, Vector[] centroids) {
         JavaPairRDD<Vector, int[]> stat; // output RDD
@@ -324,17 +317,18 @@ class mymethods {
                     int[] binaryClass;
                     if (demoClass.equals("A")) {
                         binaryClass = new int[]{1, 0};
-                    } else {
+                    } else { // if demoClass == "B"
                         binaryClass = new int[]{0, 1};
                     }
 
-                    // (closest center, binary class)
+
                     ArrayList<Tuple2<Vector, int[]>> centerBinaryClass = new ArrayList<>();
+                    // (coordinates of the nearest center , binaryClass)
                     centerBinaryClass.add(new Tuple2<>(closestCenter._1(), binaryClass));
                     return centerBinaryClass.iterator();
                 })
                 .reduceByKey((x, y) -> {
-                    // sum all the vectors
+                    // sum all the binaryClasses
                     return new int[] { x[0] + y[0], x[1] + y[1] };
                 });
         List<Tuple2<Vector, int[]>> statList = stat.collect();
