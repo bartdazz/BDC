@@ -307,46 +307,30 @@ class mymethods {
 
         stat = rdd
                 .flatMapToPair((element) -> {
-                    Vector point = element._1();        // point
-                    String demoClass = element._2();    // Class of the element (A or B)
-                    // output of the function
-                    // ([ Point, demographic class] , [ center-i, d_i])
-                    ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>> pointClassDistCenter = new ArrayList<>();
-                    for (Vector center : centroids) {
-                        // compute the distance between the selected center and the point
-                        double distance = Vectors.sqdist(point, center);
-                        Tuple2<Vector, String> pointClass = new Tuple2<Vector, String>(point, demoClass);
-                        Tuple2<Vector, Double> centerDist = new Tuple2<Vector, Double>(center, distance);
-                        pointClassDistCenter.add(
-                                new Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>(pointClass, centerDist));
-                    }
-                    ArrayList<Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>> pointClassDistCenterOut = new ArrayList<>();
-                    pointClassDistCenterOut.add(
-                            new Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>>(pointClassDistCenter.get(0)._1(),
-                                    pointClassDistCenter.get(0)._2()));
+                    Vector point = element._1();        // Point
+                    String demoClass = element._2();    // Class (A or B)
 
-                    for (Tuple2<Tuple2<Vector, String>, Tuple2<Vector, Double>> el : pointClassDistCenter) {
-                        if (el._2()._2() < pointClassDistCenterOut.get(0)._2()._2()) {
-                            pointClassDistCenterOut.set(0, el);
+                    // Find the closest center
+                    // ( center , distance )
+                    Tuple2<Vector, Double> closestCenter = null;
+                    for (Vector center : centroids) {
+                        double distance = Vectors.sqdist(point, center);
+                        if (closestCenter == null || distance < closestCenter._2()) {
+                            closestCenter = new Tuple2<>(center, distance);
                         }
                     }
-                    return pointClassDistCenterOut.iterator();
-                })
-                // Round 2
-                .flatMapToPair((element) -> {
-                    // Class of the element (A or B)
-                    String demoClass = element._1()._2();
-                    // Center
-                    Vector center = element._2()._1();
-                    int[] binaryClass;
 
+                    // Convert demoClass to binary representation
+                    int[] binaryClass;
                     if (demoClass.equals("A")) {
-                        binaryClass = new int[] { 1, 0 };
-                    } else { // if demoClass == "B"
-                        binaryClass = new int[] { 0, 1 };
+                        binaryClass = new int[]{1, 0};
+                    } else {
+                        binaryClass = new int[]{0, 1};
                     }
+
+                    // (closest center, binary class)
                     ArrayList<Tuple2<Vector, int[]>> centerBinaryClass = new ArrayList<>();
-                    centerBinaryClass.add(new Tuple2<Vector, int[]>(center, binaryClass));
+                    centerBinaryClass.add(new Tuple2<>(closestCenter._1(), binaryClass));
                     return centerBinaryClass.iterator();
                 })
                 .reduceByKey((x, y) -> {
