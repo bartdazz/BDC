@@ -122,7 +122,7 @@ public class G89HW2 {
         System.out.println("N = " + numpoints
                 + ", NA = " + classA
                 + ", NB = " + classB);
-        
+
         // compute clusters with the LLoyd's algorithm
         KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
         Vector[] cStand = clusters.clusterCenters();
@@ -158,11 +158,64 @@ class myMethods {
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
         Vector[] C = clusters.clusterCenters();
 
-        // Initial set of centroids
-
         // loop of the algorithm
 
+        for (int i = 0; i < M; i++) {
+            List<Tuple2<Vector, Tuple2<Tuple2<Integer, Integer>, Tuple2<Vector, Vector>>>> auxSums;
+            auxSums = U.flatMapToPair((element) -> {
+                ArrayList<Tuple2<Vector, Tuple2<Vector, String>>> clusterPoint = new ArrayList<>();
+                double minDistance = Vectors.sqdist(element._1(), C[0]);
+                Vector closerCenter = C[0];
+                for (Vector center : C) {
+                    if (Vectors.sqdist(element._1(), center) < minDistance) {
+                        closerCenter = center;
+                    }
+                    clusterPoint.add(new Tuple2<Vector, Tuple2<Vector, String>>(center, element));
+                }
+                return clusterPoint.iterator();
+            }).reduceByKey((x, y) -> {
+                // name the variables
+                String demoClass1 = x._2();
+                String demoClass2 = y._2();
+                Vector point1 = x._1();
+                Vector point2 = y._1();
+
+                // buil auxiliary sstructures
+                ArrayList<Tuple2<Tuple2<Integer, Integer>, Tuple2<Vector, Vector>>> aux = new ArrayList<>();
+                int nA = 0, nB = 0;
+                Vector sumA = Vectors.zeros(x._1().size());
+                Vector sumB = Vectors.zeros(x._1().size());
+
+                // update counters
+                if (demoClass1.equals("A")) {
+                    nA += 1;
+                    sumA = myMethods.SumVectors(sumA, point1);
+                } else {
+                    nB += 1;
+                    sumB = myMethods.SumVectors(sumB, point1);
+
+                }
+                if (demoClass2.equals("A")) {
+                    nA += 1;
+                    sumA = myMethods.SumVectors(sumA, point2);
+                } else {
+                    nB += 1;
+                    sumB = myMethods.SumVectors(sumB, point2);
+                }
+                aux.add(new Tuple2<>(new Tuple2<>(nA, nB), new Tuple2<>(sumA, sumB)));
+                return aux;
+            }).collect();
+        }
+
         return C;
+    }
+
+    public static Vector SumVectors(Vector v1, Vector v2) {
+        double[] sum = new double[v1.size()];
+        for (int i = 0; i < v1.size(); i++) {
+            sum[i] = v1.apply(i) + v2.apply(i);
+        }
+        return Vectors.dense(sum);
     }
 
     /*
