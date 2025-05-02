@@ -34,7 +34,7 @@ public class G89HW2 {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
         // Create Spark configuration
-        SparkConf conf = new SparkConf().setAppName("G89HW1");
+        SparkConf conf = new SparkConf().setAppName("G89HW2");
         // Initialize JavaSparkContext
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("WARN");
