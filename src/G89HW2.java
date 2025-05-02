@@ -131,8 +131,8 @@ public class G89HW2 {
         Vector[] cFair = myMethods.MRFairLloyd(inputPoints, K, M);
 
         // Print the value of the objective functions
-        System.out.println("Phi(A,B,C_stand) = " + mymethods.MRComputeFairObjective(inputPoints, cStand));
-        System.out.println("Phi(A,B,C_fair) = " + mymethods.MRComputeFairObjective(inputPoints, cFair));
+        System.out.println("Phi(A,B,C_stand) = " + myMethods.MRComputeFairObjective(inputPoints, cStand));
+        System.out.println("Phi(A,B,C_fair) = " + myMethods.MRComputeFairObjective(inputPoints, cFair));
 
         // ####################################################################
         // PRINT TIME STATISTICS
@@ -186,7 +186,6 @@ class myMethods {
         // Lloyd's algorithm)
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
         Vector[] C = clusters.clusterCenters();
-
         // loop of the algorithm
 
         for (int i = 0; i < M; i++) {
@@ -198,7 +197,7 @@ class myMethods {
                 // cluster's center))
                 ArrayList<Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>>> clusterPoint = new ArrayList<>();
 
-                // compute the cluster in whichthe point belongs
+                // compute the cluster in which the point belongs
                 double minDistance = Vectors.sqdist(element._1(), C[0]);
                 int closerCenter = 0;
                 for (int j = 0; j < C.length; j++) {
