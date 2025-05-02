@@ -1,4 +1,6 @@
 import java.io.IOException;
+
+import org.apache.commons.math3.analysis.function.Sqrt;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
@@ -6,8 +8,6 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
-import scala.Tuple3;
-import spire.random.Seed;
 
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
@@ -153,6 +153,34 @@ class myMethods {
          * Output:
          * Array C of vectors that are the centroids of the clustering
          */
+        // %%%%%%%%%%%%%%%%%%%%%%
+        // Code to compute NA, NB
+        // %%%%%%%%%%%%%%%%%%%%%%
+        JavaPairRDD<String, Integer> classItems;
+        classItems = U
+                .mapToPair((element) -> new Tuple2<>(element._2(), 1))
+                .reduceByKey((x, y) -> x + y);
+
+        // The function collect takes all the data stored in the RDD and puts
+        // it into a list; the RDD is sufficiently small to allow us to do so
+        List<Tuple2<String, Integer>> classCounts = classItems.collect();
+
+        // Print the number of elements in each class
+        // Each element in the for loop is a Tuple2
+        // in classCount._1() there is the class name (key)
+        // in classCount._2() there is the count of elements in that class (value)
+        int classA = 0, classB = 0;
+        for (Tuple2<String, Integer> classCount : classCounts) {
+            if (Objects.equals(classCount._1(), "A")) {
+                classA = classCount._2();
+            } else {
+                classB = classCount._2();
+            }
+        }
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // End of code to compute NA, NB
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         // Initialization of the set C of cetroids using kmeans|| (0 iteration of
         // Lloyd's algorithm
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
@@ -161,50 +189,58 @@ class myMethods {
         // loop of the algorithm
 
         for (int i = 0; i < M; i++) {
-            List<Tuple2<Vector, Tuple2<Tuple2<Integer, Integer>, Tuple2<Vector, Vector>>>> auxSums;
+            // build the list that will collect the value of the map-reduced RDD
+            List<Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>> auxSums;
             auxSums = U.flatMapToPair((element) -> {
-                ArrayList<Tuple2<Vector, Tuple2<Vector, String>>> clusterPoint = new ArrayList<>();
+                // List that will store
+                // ((cluster's center index, demographic class), (1, point))
+                ArrayList<Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>> clusterPoint = new ArrayList<>();
+
                 double minDistance = Vectors.sqdist(element._1(), C[0]);
-                Vector closerCenter = C[0];
-                for (Vector center : C) {
-                    if (Vectors.sqdist(element._1(), center) < minDistance) {
-                        closerCenter = center;
+                int closerCenter = 0;
+                for (int j = 0; j < C.length; j++) {
+                    if (Vectors.sqdist(element._1(), C[j]) < minDistance) {
+                        closerCenter = j;
                     }
-                    clusterPoint.add(new Tuple2<Vector, Tuple2<Vector, String>>(center, element));
+                    clusterPoint.add(new Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>(
+                            new Tuple2<Integer, String>(closerCenter, element._2()),
+                            new Tuple2<Integer, Vector>(1, element._1())));
                 }
                 return clusterPoint.iterator();
             }).reduceByKey((x, y) -> {
-                // name the variables
-                String demoClass1 = x._2();
-                String demoClass2 = y._2();
-                Vector point1 = x._1();
-                Vector point2 = y._1();
-
-                // buil auxiliary sstructures
-                ArrayList<Tuple2<Tuple2<Integer, Integer>, Tuple2<Vector, Vector>>> aux = new ArrayList<>();
-                int nA = 0, nB = 0;
-                Vector sumA = Vectors.zeros(x._1().size());
-                Vector sumB = Vectors.zeros(x._1().size());
-
-                // update counters
-                if (demoClass1.equals("A")) {
-                    nA += 1;
-                    sumA = myMethods.SumVectors(sumA, point1);
-                } else {
-                    nB += 1;
-                    sumB = myMethods.SumVectors(sumB, point1);
-
-                }
-                if (demoClass2.equals("A")) {
-                    nA += 1;
-                    sumA = myMethods.SumVectors(sumA, point2);
-                } else {
-                    nB += 1;
-                    sumB = myMethods.SumVectors(sumB, point2);
-                }
-                aux.add(new Tuple2<>(new Tuple2<>(nA, nB), new Tuple2<>(sumA, sumB)));
-                return aux;
+                // this method has to return element of the same type of the input
+                int numElements = x._1() + y._1();
+                Vector sumVectors = myMethods.SumVectors(x._2(), y._2());
+                return new Tuple2<Integer, Vector>(numElements, sumVectors);
             }).collect();
+
+            // initialize variables as arrays of size K = number of clusters
+            double[] alpha = new double[K];
+            double[] beta = new double[K];
+            Vector[] muA = new Vector[K];
+            Vector[] muB = new Vector[K];
+            double[] l = new double[K];
+
+            for (Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>> element : auxSums) {
+                int clusterCenterIdx = element._1()._1();
+                String demoClass = element._1()._2();
+                int numElements = element._2()._1();
+                Vector sumVectors = element._2()._2();
+
+                // update variables
+                if (demoClass.equals("A")) {
+                    alpha[clusterCenterIdx] = numElements / classA;
+                    muA[clusterCenterIdx] = myMethods.VectorDivision(sumVectors, numElements);
+                } else {
+                    beta[clusterCenterIdx] = numElements / classB;
+                    muB[clusterCenterIdx] = myMethods.VectorDivision(sumVectors, numElements);
+                }
+            }
+            for (int j = 0; j < l.length; j++) {
+                l[j] = Math.sqrt(Vectors.sqdist(muA[i], muB[i]));
+            }
+
+            // end of for cycle of the algorithm
         }
 
         return C;
@@ -216,6 +252,13 @@ class myMethods {
             sum[i] = v1.apply(i) + v2.apply(i);
         }
         return Vectors.dense(sum);
+    }
+    public static Vector VectorDivision(Vector v, Integer n) {
+        double[] res = new double[v.size()];
+        for (int i = 0; i < v.size(); i++) {
+            res[i] = v.apply(i) / n;
+        }
+        return Vectors.dense(res);
     }
 
     /*
