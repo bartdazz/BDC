@@ -8,6 +8,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
+import scala.Tuple3;
 
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
@@ -182,7 +183,7 @@ class myMethods {
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         // Initialization of the set C of cetroids using kmeans|| (0 iteration of
-        // Lloyd's algorithm
+        // Lloyd's algorithm)
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
         Vector[] C = clusters.clusterCenters();
 
@@ -190,28 +191,37 @@ class myMethods {
 
         for (int i = 0; i < M; i++) {
             // build the list that will collect the value of the map-reduced RDD
-            List<Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>> auxSums;
+            List<Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>>> auxSums;
             auxSums = U.flatMapToPair((element) -> {
                 // List that will store
-                // ((cluster's center index, demographic class), (1, point))
-                ArrayList<Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>> clusterPoint = new ArrayList<>();
+                // ((cluster's center index, demographic class), (1, point, distance from
+                // cluster's center))
+                ArrayList<Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>>> clusterPoint = new ArrayList<>();
 
+                // compute the cluster in whichthe point belongs
                 double minDistance = Vectors.sqdist(element._1(), C[0]);
                 int closerCenter = 0;
                 for (int j = 0; j < C.length; j++) {
-                    if (Vectors.sqdist(element._1(), C[j]) < minDistance) {
+                    // distance of the point to every other cluster's center
+                    double dist = Vectors.sqdist(element._1(), C[j]);
+                    if (dist < minDistance) {
                         closerCenter = j;
+                        minDistance = dist;
                     }
-                    clusterPoint.add(new Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>(
+                    clusterPoint.add(new Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>>(
                             new Tuple2<Integer, String>(closerCenter, element._2()),
-                            new Tuple2<Integer, Vector>(1, element._1())));
+                            new Tuple3<Integer, Vector, Double>(1, element._1(), minDistance)));
                 }
+                // returning an iterator as in all flatMapToPair
                 return clusterPoint.iterator();
+
             }).reduceByKey((x, y) -> {
                 // this method has to return element of the same type of the input
+                // computing various sums
                 int numElements = x._1() + y._1();
                 Vector sumVectors = myMethods.SumVectors(x._2(), y._2());
-                return new Tuple2<Integer, Vector>(numElements, sumVectors);
+                double sumDistances = x._3() + y._3();
+                return new Tuple3<Integer, Vector, Double>(numElements, sumVectors, sumDistances);
             }).collect();
 
             // initialize variables as arrays of size K = number of clusters
@@ -220,24 +230,55 @@ class myMethods {
             Vector[] muA = new Vector[K];
             Vector[] muB = new Vector[K];
             double[] l = new double[K];
+            // auxiliary arrays used to store the distances of the points from the center of
+            // the cluster for each cluster
+            double[] sumDistancesA = new double[K];
+            double[] sumDistancesB = new double[K];
 
-            for (Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>> element : auxSums) {
+            for (Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>> element : auxSums) {
                 int clusterCenterIdx = element._1()._1();
                 String demoClass = element._1()._2();
                 int numElements = element._2()._1();
                 Vector sumVectors = element._2()._2();
+                double sumDistances = element._2()._3();
 
-                // update variables
+                // update variables based on the class
                 if (demoClass.equals("A")) {
                     alpha[clusterCenterIdx] = numElements / classA;
                     muA[clusterCenterIdx] = myMethods.VectorDivision(sumVectors, numElements);
+                    sumDistancesA[clusterCenterIdx] = sumDistances;
                 } else {
                     beta[clusterCenterIdx] = numElements / classB;
                     muB[clusterCenterIdx] = myMethods.VectorDivision(sumVectors, numElements);
+                    sumDistancesB[clusterCenterIdx] = sumDistances;
                 }
             }
+            // populate the l vector
             for (int j = 0; j < l.length; j++) {
                 l[j] = Math.sqrt(Vectors.sqdist(muA[i], muB[i]));
+            }
+
+            double fixedA = 0.00;
+            double fixedB = 0.00;
+
+            for (int j = 0; j < sumDistancesB.length; j++) {
+                fixedA += sumDistancesA[j];
+                fixedB += sumDistancesB[j];
+            }
+            fixedA /= classA;
+            fixedB /= classB;
+
+            // %%%%%%%%%%%%%
+            // Use function computeVectorX
+            // %%%%%%%%%%%%%
+            double[] x = VectorComputer.computeVectorX(fixedA, fixedB, alpha, beta, l, K);
+
+            for (int j = 0; j < K; j++) {
+                C[i] = myMethods.VectorDivision(
+                        (myMethods.SumVectors(
+                                myMethods.VectorMultiplication(muA[i], (l[i] - x[i])),
+                                myMethods.VectorMultiplication(muB[i], x[i]))),
+                        l[i]);
             }
 
             // end of for cycle of the algorithm
@@ -253,10 +294,19 @@ class myMethods {
         }
         return Vectors.dense(sum);
     }
-    public static Vector VectorDivision(Vector v, Integer n) {
+
+    public static Vector VectorDivision(Vector v, double n) {
         double[] res = new double[v.size()];
         for (int i = 0; i < v.size(); i++) {
             res[i] = v.apply(i) / n;
+        }
+        return Vectors.dense(res);
+    }
+
+    public static Vector VectorMultiplication(Vector v, double n) {
+        double[] res = new double[v.size()];
+        for (int i = 0; i < v.size(); i++) {
+            res[i] = v.apply(i) * n;
         }
         return Vectors.dense(res);
     }
@@ -351,5 +401,47 @@ class myMethods {
             }
         }
         return Math.max(fairA, fairB);
+    }
+}
+
+class VectorComputer {
+
+    public static double[] computeVectorX(
+            double fixedA,
+            double fixedB,
+            double[] alpha,
+            double[] beta,
+            double[] l,
+            int k) {
+        double gamma = 0.5;
+        double[] x = new double[k];
+
+        for (int t = 1; t <= 10; t++) {
+            double fA = fixedA;
+            double fB = fixedB;
+
+            for (int i = 0; i < k; i++) {
+                // Compute x_i
+                x[i] = ((1 - gamma) * beta[i] * l[i]) / (gamma * alpha[i] + (1 - gamma) * beta[i]);
+
+                // Update fA and fB
+                fA += alpha[i] * Math.pow(x[i], 2);
+                fB += beta[i] * Math.pow(l[i] - x[i], 2);
+            }
+
+            // Check for convergence
+            if (fA == fB) {
+                break;
+            } else {
+                double delta = Math.pow(0.5, t + 1);
+                if (fA > fB) {
+                    gamma += delta;
+                } else {
+                    gamma -= delta;
+                }
+            }
+        }
+
+        return x;
     }
 }
