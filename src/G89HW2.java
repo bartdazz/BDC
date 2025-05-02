@@ -243,18 +243,18 @@ class myMethods {
 
                 // update variables based on the class
                 if (demoClass.equals("A")) {
-                    alpha[clusterCenterIdx] = numElements / classA;
+                    alpha[clusterCenterIdx] = (double) numElements / (double) classA;
                     muA[clusterCenterIdx] = myMethods.VectorDivision(sumVectors, numElements);
                     sumDistancesA[clusterCenterIdx] = sumDistances;
                 } else {
-                    beta[clusterCenterIdx] = numElements / classB;
+                    beta[clusterCenterIdx] = (double) numElements / (double) classB;
                     muB[clusterCenterIdx] = myMethods.VectorDivision(sumVectors, numElements);
                     sumDistancesB[clusterCenterIdx] = sumDistances;
                 }
             }
             // populate the l vector
             for (int j = 0; j < l.length; j++) {
-                l[j] = Math.sqrt(Vectors.sqdist(muA[i], muB[i]));
+                l[j] = Vectors.sqdist(muA[j], muB[j]);//Math.sqrt(Vectors.sqdist(muA[j], muB[j]));
             }
 
             double fixedA = 0.00;
@@ -273,11 +273,11 @@ class myMethods {
             double[] x = VectorComputer.computeVectorX(fixedA, fixedB, alpha, beta, l, K);
 
             for (int j = 0; j < K; j++) {
-                C[i] = myMethods.VectorDivision(
+                C[j] = myMethods.VectorDivision(
                         (myMethods.SumVectors(
-                                myMethods.VectorMultiplication(muA[i], (l[i] - x[i])),
-                                myMethods.VectorMultiplication(muB[i], x[i]))),
-                        l[i]);
+                                myMethods.VectorMultiplication(muA[j], (l[j] - x[j])),
+                                myMethods.VectorMultiplication(muB[j], x[j]))),
+                        l[j]);
             }
 
             // end of for cycle of the algorithm
