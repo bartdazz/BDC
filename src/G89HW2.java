@@ -7,6 +7,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.codehaus.janino.Java;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -190,12 +191,14 @@ class myMethodsHW2 {
         // loop of the algorithm
         for (int i = 0; i < M; i++) {
             // build the list that will collect the value of the map-reduced RDD
-            List<Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>>> auxSums;
-            auxSums = U.flatMapToPair((element) -> {
+            List<Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>> auxSums;
+            // RDD that will store partial computations
+            JavaPairRDD<Tuple2<Integer, String>, Tuple2<Integer, Vector>> clustering;
+
+            clustering = U.flatMapToPair((element) -> {
                 // List that will store
-                // ((cluster's center index, demographic class), (1, point, distance from
-                // cluster's center))
-                ArrayList<Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>>> clusterPoint = new ArrayList<>();
+                // ((cluster's center index, demographic class), (1, point)
+                ArrayList<Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>> clusterPoint = new ArrayList<>();
 
                 // compute the cluster in which the point belongs
                 double minDistance = Vectors.sqdist(element._1(), C[0]);
@@ -208,19 +211,19 @@ class myMethodsHW2 {
                         minDistance = dist;
                     }
                 }
-                clusterPoint.add(new Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>>(
+                clusterPoint.add(new Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>>(
                         new Tuple2<Integer, String>(closestCenter, element._2()),
-                        new Tuple3<Integer, Vector, Double>(1, element._1(), minDistance)));
+                        new Tuple2<Integer, Vector>(1, element._1())));
                 // returning an iterator as in all flatMapToPair functions
                 return clusterPoint.iterator();
 
-            }).reduceByKey((x, y) -> {
+            });
+            auxSums = clustering.reduceByKey((x, y) -> {
                 // this method has to return element of the same type of the input
                 // computing various sums
                 int numElements = x._1() + y._1();
                 Vector sumVectors = myMethodsHW2.SumVectors(x._2(), y._2());
-                double sumDistances = x._3() + y._3();
-                return new Tuple3<Integer, Vector, Double>(numElements, sumVectors, sumDistances);
+                return new Tuple2<Integer, Vector>(numElements, sumVectors);
             }).collect();
             // initialize variables as arrays of size K = number of clusters
             double[] alpha = new double[K];
@@ -228,29 +231,26 @@ class myMethodsHW2 {
             Vector[] muA = new Vector[K];
             Vector[] muB = new Vector[K];
             double[] l = new double[K];
-            // auxiliary arrays used to store the distances of the points from the center of
-            // the cluster for each cluster
-            double[] sumDistancesA = new double[K];
-            double[] sumDistancesB = new double[K];
 
-            for (Tuple2<Tuple2<Integer, String>, Tuple3<Integer, Vector, Double>> element : auxSums) {
+            // code to populate alpha, beta, muA, muB
+            for (Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>> element : auxSums) {
                 int clusterCenterIdx = element._1()._1();
                 String demoClass = element._1()._2();
                 int numElements = element._2()._1();
                 Vector sumVectors = element._2()._2();
-                double sumDistances = element._2()._3();
 
                 // update variables based on the class
                 if (demoClass.equals("A")) {
                     alpha[clusterCenterIdx] = (double) numElements / (double) classA;
                     muA[clusterCenterIdx] = myMethodsHW2.VectorDivision(sumVectors, numElements);
-                    sumDistancesA[clusterCenterIdx] = sumDistances;
+
                 } else {
                     beta[clusterCenterIdx] = (double) numElements / (double) classB;
                     muB[clusterCenterIdx] = myMethodsHW2.VectorDivision(sumVectors, numElements);
-                    sumDistancesB[clusterCenterIdx] = sumDistances;
+
                 }
             }
+
             // populate the l vector
             for (int j = 0; j < l.length; j++) {
                 l[j] = Math.sqrt(Vectors.sqdist(muA[j], muB[j]));
@@ -259,9 +259,36 @@ class myMethodsHW2 {
             double fixedA = 0.00;
             double fixedB = 0.00;
 
-            for (int j = 0; j < sumDistancesB.length; j++) {
-                fixedA += sumDistancesA[j];
-                fixedB += sumDistancesB[j];
+            // computing fixedA and fixedB
+            List<Tuple2<Tuple2<Integer, String>, Double>> delta;
+            delta = clustering
+                    .flatMapToPair((element) -> {
+                        // initializing arraylist to be returned
+                        ArrayList<Tuple2<Tuple2<Integer, String>, Double>> distFromMu = new ArrayList<>();
+                        // specifying variables for readability
+                        int clusterIdx = element._1()._1();
+                        String demoClass = element._1()._2();
+                        Vector point = element._2()._2();
+                        double distance;
+                        if (demoClass.equals("A")) {
+                            distance = Vectors.sqdist(point, muA[clusterIdx]);
+                        } else {
+                            distance = Vectors.sqdist(point, muB[clusterIdx]);
+                        }
+                        distFromMu.add(new Tuple2<>(element._1(), distance));
+                        return distFromMu.iterator();
+                    })
+                    .reduceByKey((x, y) -> x + y)
+                    .collect();
+
+            for (Tuple2< Tuple2<Integer, String>, Double> element : delta) {
+                String demoClass = element._1()._2();
+                double distance = element._2();
+                if (demoClass.equals("A")) {
+                    fixedA += distance;
+                } else {
+                    fixedB += distance;
+                }
             }
             fixedA /= classA;
             fixedB /= classB;
