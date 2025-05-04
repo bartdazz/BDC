@@ -431,42 +431,28 @@ class myMethodsHW2 {
 
 class VectorComputer {
 
-    public static double[] computeVectorX(
-            double fixedA,
-            double fixedB,
-            double[] alpha,
-            double[] beta,
-            double[] l,
-            int k) {
+    public static double[] computeVectorX(double fixedA, double fixedB, double[] alpha, double[] beta, double[] ell, int K) {
         double gamma = 0.5;
-        double[] x = new double[k];
-
-        for (int t = 1; t <= 10; t++) {
-            double fA = fixedA;
-            double fB = fixedB;
-
-            for (int i = 0; i < k; i++) {
-                // Compute x_i
-                x[i] = ((1 - gamma) * beta[i] * l[i]) / (gamma * alpha[i] + (1 - gamma) * beta[i]);
-
-                // Update fA and fB
-                fA += alpha[i] * Math.pow(x[i], 2);
-                fB += beta[i] * Math.pow(l[i] - x[i], 2);
+        double[] xDist = new double[K];
+        double fA, fB;
+        double power = 0.5;
+        int T = 10;
+        for (int t = 1; t <= T; t++) {
+            fA = fixedA;
+            fB = fixedB;
+            power = power / 2;
+            for (int i = 0; i < K; i++) {
+                double temp = (1 - gamma) * beta[i] * ell[i] / (gamma * alpha[i] + (1 - gamma) * beta[i]);
+                xDist[i] = temp;
+                fA += alpha[i] * temp * temp;
+                temp = (ell[i] - temp);
+                fB += beta[i] * temp * temp;
             }
-
-            // Check for convergence
             if (fA == fB) {
                 break;
-            } else {
-                double delta = Math.pow(0.5, t + 1);
-                if (fA > fB) {
-                    gamma += delta;
-                } else {
-                    gamma -= delta;
-                }
             }
+            gamma = (fA > fB) ? gamma + power : gamma - power;
         }
-
-        return x;
+        return xDist;
     }
 }
