@@ -183,10 +183,11 @@ class myMethodsHW2 {
         // End of code to compute NA, NB
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        // Initialization of the set C of cetroids using kmeans|| (0 iteration of
+        // Initialization of the set C of centroids using kmeans|| (0 iteration of
         // Lloyd's algorithm)
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
         Vector[] C = clusters.clusterCenters();
+        int vectLen = C[0].size();
 
         // loop of the algorithm
         for (int i = 0; i < M; i++) {
@@ -230,8 +231,15 @@ class myMethodsHW2 {
             double[] beta = new double[K];
             Vector[] muA = new Vector[K];
             Vector[] muB = new Vector[K];
-            double[] l = new double[K];
+            // we need to initialize muA and muB to be zero vectors, otherwise if a point of
+            // a specific class doesn't belong to a cluster, then the mu vector remains with
+            // a null entry, but we want it to be a zero entry
+            for (int k = 0; k < K; k++) {
+                muA[k] = Vectors.zeros(vectLen);
+                muB[k] = Vectors.zeros(vectLen);
+            }
 
+            double[] l = new double[K];
             // code to populate alpha, beta, muA, muB
             for (Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>> element : auxSums) {
                 int clusterCenterIdx = element._1()._1();
@@ -281,7 +289,7 @@ class myMethodsHW2 {
                     .reduceByKey((x, y) -> x + y)
                     .collect();
 
-            for (Tuple2< Tuple2<Integer, String>, Double> element : delta) {
+            for (Tuple2<Tuple2<Integer, String>, Double> element : delta) {
                 String demoClass = element._1()._2();
                 double distance = element._2();
                 if (demoClass.equals("A")) {
@@ -431,7 +439,8 @@ class myMethodsHW2 {
 
 class VectorComputer {
 
-    public static double[] computeVectorX(double fixedA, double fixedB, double[] alpha, double[] beta, double[] ell, int K) {
+    public static double[] computeVectorX(double fixedA, double fixedB, double[] alpha, double[] beta, double[] ell,
+            int K) {
         double gamma = 0.5;
         double[] xDist = new double[K];
         double fA, fB;
