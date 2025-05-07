@@ -126,18 +126,40 @@ public class G89HW2 {
                 + ", NB = " + classB);
 
         // compute clusters with the LLoyd's algorithm
+        long startLLoyds = System.currentTimeMillis();
         KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
         Vector[] cStand = clusters.clusterCenters();
+        long endLLoyds = System.currentTimeMillis();
 
+        long startFair = System.currentTimeMillis();
         Vector[] cFair = myMethodsHW2.MRFairLloyd(inputPoints, K, M);
+        long endFair = System.currentTimeMillis();
 
         // Print the value of the objective functions
-        System.out.println("Phi(A,B,C_stand) = " + myMethodsHW2.MRComputeFairObjective(inputPoints, cStand));
-        System.out.println("Phi(A,B,C_fair) = " + myMethodsHW2.MRComputeFairObjective(inputPoints, cFair));
+        long startPhiStand = System.currentTimeMillis();
+        double phiStand = myMethodsHW2.MRComputeFairObjective(inputPoints, cStand);
+        long endPhiStand = System.currentTimeMillis();
+
+        long startPhiFair = System.currentTimeMillis();
+        double phiFair = myMethodsHW2.MRComputeFairObjective(inputPoints, cFair);
+        long endPhiFair = System.currentTimeMillis();
+
+        System.out.println("Phi(A,B,C_stand) = " + phiStand);
+        System.out.println("Phi(A,B,C_fair) = " + phiFair);
 
         // ####################################################################
         // PRINT TIME STATISTICS
         // ####################################################################
+        System.out.println("time LLoyds " + (endLLoyds - startLLoyds) + " seconds"
+                + ", time loss LLoyds " + (endPhiStand - startPhiStand));
+        System.out.println("time Fair " + (endFair - startFair) + " seconds"
+                + ", time loss Fair " + (endPhiFair - startPhiFair));
+
+        // TO BE REMOVED
+        System.out.println("Standard centroids");
+        mymethods.MRPrintStatistics(inputPoints, cStand);
+        System.out.println("Fair centroids");
+        mymethods.MRPrintStatistics(inputPoints, cFair);
         // Stop SparkContext at the end
         sc.close();
     }
