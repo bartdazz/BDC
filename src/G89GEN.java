@@ -7,6 +7,9 @@ import java.io.IOException;
 public class G89GEN {
 
     public static void main(String[] args) throws IOException {
+        // %%%%%%%%%%%%% YOU CAN ADD A BOUND TO THE MINIMUM NUMBER OF POINTS
+        // AND ALSO TRY TO SUGGEST THE RIGHT NUMBER OF POINTS TO USE BASED ON THE NUMBER
+        // OF CLUSTERS
         /*
          * The idea is to create each cluster as formed by 1 point of class A with
          * coordinates (-10, 10 * i) and many points of class B with coordinates
@@ -22,7 +25,7 @@ public class G89GEN {
         int K = Integer.parseInt(args[1]);
 
         if (N < 2 * K) {
-            throw new IllegalArgumentException("USAGE: file_path, num_partition, num_centers, num_iteration");
+            throw new IllegalArgumentException("The number of points should be at least twice the number of clusters");
         }
 
         for (int i = 0; i < K; i++) {

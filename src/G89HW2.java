@@ -150,9 +150,9 @@ public class G89HW2 {
         // ####################################################################
         // PRINT TIME STATISTICS
         // ####################################################################
-        System.out.println("time LLoyds " + (endLLoyds - startLLoyds) + " seconds"
+        System.out.println("time LLoyds " + (endLLoyds - startLLoyds) + " ms"
                 + ", time loss LLoyds " + (endPhiStand - startPhiStand));
-        System.out.println("time Fair " + (endFair - startFair) + " seconds"
+        System.out.println("time Fair " + (endFair - startFair) + " ms"
                 + ", time loss Fair " + (endPhiFair - startPhiFair));
 
         // TO BE REMOVED
