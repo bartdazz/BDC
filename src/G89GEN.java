@@ -10,6 +10,8 @@ public class G89GEN {
         // %%%%%%%%%%%%% YOU CAN ADD A BOUND TO THE MINIMUM NUMBER OF POINTS
         // AND ALSO TRY TO SUGGEST THE RIGHT NUMBER OF POINTS TO USE BASED ON THE NUMBER
         // OF CLUSTERS
+        // note that the distance between points doesn't make all that difference
+        // bcs the proportion between the fair and the classic remains almost the same
         /*
          * The idea is to create each cluster as formed by 1 point of class A with
          * coordinates (-10, 10 * i) and many points of class B with coordinates

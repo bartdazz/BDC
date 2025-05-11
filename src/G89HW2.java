@@ -144,22 +144,22 @@ public class G89HW2 {
         double phiFair = myMethodsHW2.MRComputeFairObjective(inputPoints, cFair);
         long endPhiFair = System.currentTimeMillis();
 
-        System.out.println("Phi(A,B,C_stand) = " + phiStand);
-        System.out.println("Phi(A,B,C_fair) = " + phiFair);
+        System.out.println("Fair Objective with Standard Centers = " + phiStand);
+        System.out.println("Fair Objective with Fair Centers = " + phiFair);
 
         // ####################################################################
         // PRINT TIME STATISTICS
         // ####################################################################
-        System.out.println("time LLoyds " + (endLLoyds - startLLoyds) + " ms"
-                + ", time loss LLoyds " + (endPhiStand - startPhiStand));
-        System.out.println("time Fair " + (endFair - startFair) + " ms"
-                + ", time loss Fair " + (endPhiFair - startPhiFair));
+        System.out.println("Time to compute standard centers = " + (endLLoyds - startLLoyds) + " ms");
+        System.out.println("Time to compute fair centers =  " + (endFair - startFair) + " ms");
+        System.out.println("Time to compute objective with standard centers = " + (endPhiStand - startPhiStand) + " ms");
+        System.out.println("Time to compute objective with fair centers = " + (endPhiFair - startPhiFair) + " ms");
 
         // TO BE REMOVED
-        System.out.println("Standard centroids");
-        mymethods.MRPrintStatistics(inputPoints, cStand);
-        System.out.println("Fair centroids");
-        mymethods.MRPrintStatistics(inputPoints, cFair);
+        //System.out.println("Standard centroids");
+        //mymethods.MRPrintStatistics(inputPoints, cStand);
+        //System.out.println("Fair centroids");
+        //mymethods.MRPrintStatistics(inputPoints, cFair);
         // Stop SparkContext at the end
         sc.close();
     }
