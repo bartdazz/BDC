@@ -156,10 +156,10 @@ public class G89HW2 {
         System.out.println("Time to compute objective with fair centers = " + (endPhiFair - startPhiFair) + " ms");
 
         // TO BE REMOVED
-        //System.out.println("Standard centroids");
-        //mymethods.MRPrintStatistics(inputPoints, cStand);
-        //System.out.println("Fair centroids");
-        //mymethods.MRPrintStatistics(inputPoints, cFair);
+        System.out.println("Standard centroids");
+        mymethods.MRPrintStatistics(inputPoints, cStand);
+        System.out.println("Fair centroids");
+        mymethods.MRPrintStatistics(inputPoints, cFair);
         // Stop SparkContext at the end
         sc.close();
     }

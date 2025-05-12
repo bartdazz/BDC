@@ -30,3 +30,10 @@ We can do this with a very simple Map Reduce algorithm. From a key value pairs R
 The main thing is to be able to implement an efficient MR algorithm to compute the distance of each point from the set of centroids.
 Possible idea: keep the point as the key of the pairs and as element put a list containing the distances of the point from all the centroids. Compute the minimum of this list and replace all the keys with the same value e.g. 0 (this could be done also in two steps to avoid having all the data in one reducer) and then sum the squared distances.
 - Map Round 1: 
+
+# Exercise 2:
+- understand why the objective function are so slow (maybe we need to do an action on the RDD before the computation)
+- sobstitute for cycle with map reduce algorithm
+- check how the proportion between width and height changes the objective functions
+- try to produce a file with a large number of centroids
+
