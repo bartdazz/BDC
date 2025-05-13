@@ -133,7 +133,7 @@ public class G89HW2 {
         long endLLoyds = System.currentTimeMillis();
 
         long startFair = System.currentTimeMillis();
-        Vector[] cFair = myMethodsHW2.MRFairLloyd(inputPoints, K, M);
+        Vector[] cFair = myMethodsHW2.MRFairLloyd(inputPoints, K, M, classA, classB);
         long endFair = System.currentTimeMillis();
 
         // Print the value of the objective functions
@@ -167,7 +167,7 @@ public class G89HW2 {
 }
 
 class myMethodsHW2 {
-    public static Vector[] MRFairLloyd(JavaPairRDD<Vector, String> U, Integer K, Integer M) {
+    public static Vector[] MRFairLloyd(JavaPairRDD<Vector, String> U, Integer K, Integer M, int classA, int classB) {
         /*
          * Input:
          * U : key-value pairs RDD where the key is a vector representing a point and
@@ -178,34 +178,6 @@ class myMethodsHW2 {
          * Output:
          * Array C of vectors that are the centroids of the clustering
          */
-        // %%%%%%%%%%%%%%%%%%%%%%
-        // Code to compute NA, NB
-        // %%%%%%%%%%%%%%%%%%%%%%
-        JavaPairRDD<String, Integer> classItems;
-        classItems = U
-                .mapToPair((element) -> new Tuple2<>(element._2(), 1))
-                .reduceByKey((x, y) -> x + y);
-
-        // The function collect takes all the data stored in the RDD and puts
-        // it into a list; the RDD is sufficiently small to allow us to do so
-        List<Tuple2<String, Integer>> classCounts = classItems.collect();
-
-        // Print the number of elements in each class
-        // Each element in the for loop is a Tuple2
-        // in classCount._1() there is the class name (key)
-        // in classCount._2() there is the count of elements in that class (value)
-        int classA = 0, classB = 0;
-        for (Tuple2<String, Integer> classCount : classCounts) {
-            if (Objects.equals(classCount._1(), "A")) {
-                classA = classCount._2();
-            } else {
-                classB = classCount._2();
-            }
-        }
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // End of code to compute NA, NB
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
         // Initialization of the set C of centroids using kmeans|| (0 iteration of
         // Lloyd's algorithm)
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
