@@ -116,6 +116,7 @@ public class G89HW2 {
                 classB = classCount._2();
             }
         }
+
         // print command-line arguments
         System.out.println("Input file = " + args[0]
                 + ", L = " + L
@@ -157,10 +158,10 @@ public class G89HW2 {
         System.out.println("Time to compute objective with fair centers = " + (endPhiFair - startPhiFair) + " ms");
 
         // TO BE REMOVED
-        System.out.println("Standard centroids");
-        mymethods.MRPrintStatistics(inputPoints, cStand);
-        System.out.println("Fair centroids");
-        mymethods.MRPrintStatistics(inputPoints, cFair);
+        //System.out.println("Standard centroids");
+        //mymethods.MRPrintStatistics(inputPoints, cStand);
+        //System.out.println("Fair centroids");
+        //mymethods.MRPrintStatistics(inputPoints, cFair);
         // Stop SparkContext at the end
         sc.close();
     }
@@ -184,7 +185,7 @@ class myMethodsHW2 {
         JavaPairRDD<String, Integer> classItems;
         classItems = U
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
-                .reduceByKey((x, y) -> x + y);
+                .reduceByKey((x, y) -> x + y).cache();
 
         // The function collect takes all the data stored in the RDD and puts
         // it into a list; the RDD is sufficiently small to allow us to do so
@@ -240,8 +241,7 @@ class myMethodsHW2 {
                         new Tuple2<Integer, Vector>(1, element._1())));
                 // returning an iterator as in all flatMapToPair functions
                 return clusterPoint.iterator();
-
-            });
+            }).cache();
             auxSums = clustering.reduceByKey((x, y) -> {
                 // this method has to return element of the same type of the input
                 // computing various sums
