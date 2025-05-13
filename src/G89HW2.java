@@ -87,6 +87,7 @@ public class G89HW2 {
                     // return an iterator over the pairs as the result of this function
                     return pairs.iterator();
                 });
+
         // First Map Reduce part to compute the number of elements belonging to each
         // class
         JavaPairRDD<String, Integer> classItems; // build a new RDD
