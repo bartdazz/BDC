@@ -7,6 +7,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.codehaus.janino.Java;
 import scala.Tuple2;
 import scala.Tuple3;
@@ -207,6 +208,14 @@ class myMethodsHW2 {
         // End of code to compute NA, NB
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // GETTING THE SPARK CONTEXT. IS THIS SAFE?
+        JavaSparkContext sc = JavaSparkContext.fromSparkContext(U.context());
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // BROADCASTING
+        //Broadcast<Integer> classABroadcast = sc.broadcast(classA);
+        //Broadcast<Integer> classBBroadcast = sc.broadcast(classB);
+
         // Initialization of the set C of centroids using kmeans|| (0 iteration of
         // Lloyd's algorithm)
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
@@ -282,6 +291,12 @@ class myMethodsHW2 {
                 }
             }
 
+            //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            // BROADCASTING
+            Broadcast<Vector[]> muBBroadcast =  sc.broadcast(muB);
+            Broadcast<Vector[]> muABroadcast =  sc.broadcast(muA);
+
+
             // populate the l vector
             for (int j = 0; j < l.length; j++) {
                 l[j] = Math.sqrt(Vectors.sqdist(muA[j], muB[j]));
@@ -302,9 +317,9 @@ class myMethodsHW2 {
                         Vector point = element._2()._2();
                         double distance;
                         if (demoClass.equals("A")) {
-                            distance = Vectors.sqdist(point, muA[clusterIdx]);
+                            distance = Vectors.sqdist(point, muABroadcast.value()[clusterIdx]);
                         } else {
-                            distance = Vectors.sqdist(point, muB[clusterIdx]);
+                            distance = Vectors.sqdist(point, muBBroadcast.value()[clusterIdx]);
                         }
                         distFromMu.add(new Tuple2<>(element._1(), distance));
                         return distFromMu.iterator();
@@ -337,6 +352,8 @@ class myMethodsHW2 {
                         l[j]);
             }
 
+            muABroadcast.destroy();
+            muBBroadcast.destroy();
             // end of for cycle of the algorithm
         }
 

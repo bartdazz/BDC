@@ -33,7 +33,8 @@ Possible idea: keep the point as the key of the pairs and as element put a list 
 
 # Exercise 2:
 - understand why the objective function are so slow (maybe we need to do an action on the RDD before the computation)
-- sobstitute for cycle with map reduce algorithm
+- substitute for cycle with map reduce algorithm (don't think it's needed)
 - check how the proportion between width and height changes the objective functions
 - try to produce a file with a large number of centroids
+- **broadcast the centroids**
 
