@@ -26,12 +26,16 @@ public class G89GEN {
         int N = Integer.parseInt(args[0]);
         int K = Integer.parseInt(args[1]);
 
-        if (N < 2 * K) {
-            throw new IllegalArgumentException("The number of points should be at least twice the number of clusters");
+        if (N < 3 * K) {
+            throw new IllegalArgumentException("The suggested minimum number of points for "
+                    + K + " clusters is " + 3 * K + " points.");
         }
 
+        double halfLateralStep = 10.0;
+        double verticalStep = 30.0;
+
         for (int i = 0; i < K; i++) {
-            System.out.println(-10.0 + "," + (0.0 + 10.0 * i) + ",A");
+            System.out.println(-halfLateralStep + "," + (0.0 + verticalStep * i) + ",A");
         }
 
         int nB = (N - K) / K; // number of points of class B belonging to each cluster
@@ -39,11 +43,11 @@ public class G89GEN {
 
         for (int i = 0; i < K - 1; i++) {
             for (int j = 0; j < nB; j++) {
-                System.out.println(10.0 + "," + (0.0 + 10.0 * i) + ",B");
+                System.out.println(halfLateralStep + "," + (0.0 + verticalStep * i) + ",B");
             }
         }
         for (int j = 0; j < nBLast; j++) {
-            System.out.println(10.0 + "," + (0.0 + 10.0 * (K - 1)) + ",B");
+            System.out.println(halfLateralStep + "," + (0.0 + verticalStep * (K - 1)) + ",B");
         }
 
     }

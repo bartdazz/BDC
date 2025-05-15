@@ -26,146 +26,146 @@ public class G89HW2 {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         // CHECKING NUMBER OF CMD LINE PARAMETERS
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
-        if (args.length != 4) {
-            throw new IllegalArgumentException("USAGE: file_path, num_partition, num_centers, num_iteration");
-        }
-
-        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-        // SPARK SETUP
-        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
-        // Create Spark configuration
-        SparkConf conf = new SparkConf().setAppName("G89HW2");
-        // Initialize JavaSparkContext
-        JavaSparkContext sc = new JavaSparkContext(conf);
-        sc.setLogLevel("WARN");
-
-        // Reading the input
-        int L = Integer.parseInt(args[1]); // number of partitions of the RDD
-        int K = Integer.parseInt(args[2]); // number of clusters
-        int M = Integer.parseInt(args[3]); // number of iterations
-
-        // read the text file in input
-        JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
-        long numpoints = points.count();
-        // build a key-value pairs RDD
-        JavaPairRDD<Vector, String> inputPoints;
-
-        // the following chunk of code will create a key-value pairs RDD
-        inputPoints = points
-                .flatMapToPair((pointClass) -> {
-                    // splitting the String representing the point and it's class
-                    String[] tokens = pointClass.split(",");
-
-                    // getting the length of the array tokens
-                    Integer len = tokens.length;
-
-                    // Extracting the sublist regarding the point's coordinates
-                    String[] pointString = Arrays.copyOfRange(tokens, 0, len - 1);
-
-                    // Transforming the coordinates into doubles
-                    double[] pointDouble = Arrays
-                            .stream(pointString)
-                            .mapToDouble(Double::parseDouble)
-                            .toArray();
-
-                    // Creating the vector
-                    Vector point = Vectors.dense(pointDouble);
-
-                    // Extracting the demographic class
-                    String demoClass = tokens[len - 1];
-
-                    // Create the ArrayList that will contain the key-value pairs
-                    ArrayList<Tuple2<Vector, String>> pairs = new ArrayList<>();
-
-                    // Create the Tuple2 of a single pair point-class
-                    Tuple2<Vector, String> singlePair = new Tuple2<Vector, String>(point, demoClass);
-
-                    // Add the pair to the ArrayList pairs
-                    pairs.add(singlePair);
-
-                    // return an iterator over the pairs as the result of this function
-                    return pairs.iterator();
-                });
-
-        // First Map Reduce part to compute the number of elements belonging to each
-        // class
-        JavaPairRDD<String, Integer> classItems; // build a new RDD
-        classItems = inputPoints
-                // element is a key-value pair
-                // with this map we want to set as key the demographic class
-                // so the second element of the Tuple2
-                // and as value we set 1 that then will be summed up in
-                // the reduceByKey phase
-                .mapToPair((element) -> new Tuple2<>(element._2(), 1))
-                .reduceByKey((x, y) -> x + y); // this sums all the 1 for each class
-
-        // The function collect takes al the data stored in the RDD and puts
-        // it into a list; the RDD is sufficiently small to allow us to do so
-        List<Tuple2<String, Integer>> classCounts = classItems.collect();
-
-        // Print the number of elements in each class
-        // Each element in the for loop is a Tuple2
-        // in classCount._1() there is the class name (key)
-        // in classCount._2() there is the count of elements in that class (value)
-        int classA = 0, classB = 0;
-        for (Tuple2<String, Integer> classCount : classCounts) {
-            if (Objects.equals(classCount._1(), "A")) {
-                classA = classCount._2();
-            } else {
-                classB = classCount._2();
+            if (args.length != 4) {
+                throw new IllegalArgumentException("USAGE: file_path, num_partition, num_centers, num_iteration");
             }
+
+            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+            // SPARK SETUP
+            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+            // Create Spark configuration
+            SparkConf conf = new SparkConf().setAppName("G89HW2");
+            // Initialize JavaSparkContext
+            JavaSparkContext sc = new JavaSparkContext(conf);
+            sc.setLogLevel("WARN");
+
+            // Reading the input
+            int L = Integer.parseInt(args[1]); // number of partitions of the RDD
+            int K = Integer.parseInt(args[2]); // number of clusters
+            int M = Integer.parseInt(args[3]); // number of iterations
+
+            // read the text file in input
+            JavaRDD<String> points = sc.textFile(args[0]).cache().repartition(L);
+            long numpoints = points.count();
+            // build a key-value pairs RDD
+            JavaPairRDD<Vector, String> inputPoints;
+
+            // the following chunk of code will create a key-value pairs RDD
+            inputPoints = points
+                    .flatMapToPair((pointClass) -> {
+                        // splitting the String representing the point and it's class
+                        String[] tokens = pointClass.split(",");
+
+                        // getting the length of the array tokens
+                        Integer len = tokens.length;
+
+                        // Extracting the sublist regarding the point's coordinates
+                        String[] pointString = Arrays.copyOfRange(tokens, 0, len - 1);
+
+                        // Transforming the coordinates into doubles
+                        double[] pointDouble = Arrays
+                                .stream(pointString)
+                                .mapToDouble(Double::parseDouble)
+                                .toArray();
+
+                        // Creating the vector
+                        Vector point = Vectors.dense(pointDouble);
+
+                        // Extracting the demographic class
+                        String demoClass = tokens[len - 1];
+
+                        // Create the ArrayList that will contain the key-value pairs
+                        ArrayList<Tuple2<Vector, String>> pairs = new ArrayList<>();
+
+                        // Create the Tuple2 of a single pair point-class
+                        Tuple2<Vector, String> singlePair = new Tuple2<Vector, String>(point, demoClass);
+
+                        // Add the pair to the ArrayList pairs
+                        pairs.add(singlePair);
+
+                        // return an iterator over the pairs as the result of this function
+                        return pairs.iterator();
+                    });
+
+            // First Map Reduce part to compute the number of elements belonging to each
+            // class
+            JavaPairRDD<String, Integer> classItems; // build a new RDD
+            classItems = inputPoints
+                    // element is a key-value pair
+                    // with this map we want to set as key the demographic class
+                    // so the second element of the Tuple2
+                    // and as value we set 1 that then will be summed up in
+                    // the reduceByKey phase
+                    .mapToPair((element) -> new Tuple2<>(element._2(), 1))
+                    .reduceByKey((x, y) -> x + y); // this sums all the 1 for each class
+
+            // The function collect takes al the data stored in the RDD and puts
+            // it into a list; the RDD is sufficiently small to allow us to do so
+            List<Tuple2<String, Integer>> classCounts = classItems.collect();
+
+            // Print the number of elements in each class
+            // Each element in the for loop is a Tuple2
+            // in classCount._1() there is the class name (key)
+            // in classCount._2() there is the count of elements in that class (value)
+            int classA = 0, classB = 0;
+            for (Tuple2<String, Integer> classCount : classCounts) {
+                if (Objects.equals(classCount._1(), "A")) {
+                    classA = classCount._2();
+                } else {
+                    classB = classCount._2();
+                }
+            }
+
+            // print command-line arguments
+            System.out.println("Input file = " + args[0]
+                    + ", L = " + L
+                    + ", K = " + K
+                    + ", M = " + M);
+
+            System.out.println("N = " + numpoints
+                    + ", NA = " + classA
+                    + ", NB = " + classB);
+
+            // compute clusters with the LLoyd's algorithm
+            long startLLoyds = System.currentTimeMillis();
+            KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
+            Vector[] cStand = clusters.clusterCenters();
+            long endLLoyds = System.currentTimeMillis();
+
+            long startFair = System.currentTimeMillis();
+            Vector[] cFair = myMethodsHW2.MRFairLloyd(inputPoints, K, M);
+            long endFair = System.currentTimeMillis();
+
+            // Print the value of the objective functions
+            long startPhiStand = System.currentTimeMillis();
+            double phiStand = myMethodsHW2.MRComputeFairObjective(inputPoints, cStand);
+            long endPhiStand = System.currentTimeMillis();
+
+            long startPhiFair = System.currentTimeMillis();
+            double phiFair = myMethodsHW2.MRComputeFairObjective(inputPoints, cFair);
+            long endPhiFair = System.currentTimeMillis();
+
+            System.out.println("Fair Objective with Standard Centers = " + phiStand);
+            System.out.println("Fair Objective with Fair Centers = " + phiFair);
+
+            // ####################################################################
+            // PRINT TIME STATISTICS
+            // ####################################################################
+            System.out.println("Time to compute standard centers = " + (endLLoyds - startLLoyds) + " ms");
+            System.out.println("Time to compute fair centers =  " + (endFair - startFair) + " ms");
+            System.out.println("Time to compute objective with standard centers = " + (endPhiStand - startPhiStand) + " ms");
+            System.out.println("Time to compute objective with fair centers = " + (endPhiFair - startPhiFair) + " ms");
+
+            // TO BE REMOVED
+            //System.out.println("Standard centroids");
+            //mymethods.MRPrintStatistics(inputPoints, cStand);
+            //System.out.println("Fair centroids");
+            //mymethods.MRPrintStatistics(inputPoints, cFair);
+            // Stop SparkContext at the end
+            sc.close();
         }
 
-        // print command-line arguments
-        System.out.println("Input file = " + args[0]
-                + ", L = " + L
-                + ", K = " + K
-                + ", M = " + M);
-
-        System.out.println("N = " + numpoints
-                + ", NA = " + classA
-                + ", NB = " + classB);
-
-        // compute clusters with the LLoyd's algorithm
-        long startLLoyds = System.currentTimeMillis();
-        KMeansModel clusters = KMeans.train(inputPoints.map(Tuple2::_1).rdd(), K, M);
-        Vector[] cStand = clusters.clusterCenters();
-        long endLLoyds = System.currentTimeMillis();
-
-        long startFair = System.currentTimeMillis();
-        Vector[] cFair = myMethodsHW2.MRFairLloyd(inputPoints, K, M);
-        long endFair = System.currentTimeMillis();
-
-        // Print the value of the objective functions
-        long startPhiStand = System.currentTimeMillis();
-        double phiStand = myMethodsHW2.MRComputeFairObjective(inputPoints, cStand);
-        long endPhiStand = System.currentTimeMillis();
-
-        long startPhiFair = System.currentTimeMillis();
-        double phiFair = myMethodsHW2.MRComputeFairObjective(inputPoints, cFair);
-        long endPhiFair = System.currentTimeMillis();
-
-        System.out.println("Fair Objective with Standard Centers = " + phiStand);
-        System.out.println("Fair Objective with Fair Centers = " + phiFair);
-
-        // ####################################################################
-        // PRINT TIME STATISTICS
-        // ####################################################################
-        System.out.println("Time to compute standard centers = " + (endLLoyds - startLLoyds) + " ms");
-        System.out.println("Time to compute fair centers =  " + (endFair - startFair) + " ms");
-        System.out.println("Time to compute objective with standard centers = " + (endPhiStand - startPhiStand) + " ms");
-        System.out.println("Time to compute objective with fair centers = " + (endPhiFair - startPhiFair) + " ms");
-
-        // TO BE REMOVED
-        //System.out.println("Standard centroids");
-        //mymethods.MRPrintStatistics(inputPoints, cStand);
-        //System.out.println("Fair centroids");
-        //mymethods.MRPrintStatistics(inputPoints, cFair);
-        // Stop SparkContext at the end
-        sc.close();
-    }
 }
 
 class myMethodsHW2 {
@@ -220,7 +220,10 @@ class myMethodsHW2 {
         // Lloyd's algorithm)
         KMeansModel clusters = KMeans.train(U.map(Tuple2::_1).rdd(), K, 0);
         Vector[] C = clusters.clusterCenters();
-        int vectLen = C[0].size();
+
+        // sometimes Kmeans returns a number of centers that is less than K
+        // we have to compute the exact number of centers for the next computations
+        int numCluster = C.length;
 
         // loop of the algorithm
         for (int i = 0; i < M; i++) {
@@ -260,13 +263,13 @@ class myMethodsHW2 {
             }).collect();
 
             // initialize variables as arrays of size K = number of clusters
-            double[] alpha = new double[K];
-            double[] beta = new double[K];
-            Vector[] muA = new Vector[K];
-            Vector[] muB = new Vector[K];
+            double[] alpha = new double[numCluster];
+            double[] beta = new double[numCluster];
+            Vector[] muA = new Vector[numCluster];
+            Vector[] muB = new Vector[numCluster];
 
 
-            double[] l = new double[K];
+            double[] l = new double[numCluster];
 
             // code to populate alpha, beta, muA, muB
             for (Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>> element : auxSums) {
@@ -348,9 +351,11 @@ class myMethodsHW2 {
             // %%%%%%%%%%%%%
             // Use function computeVectorX
             // %%%%%%%%%%%%%
-            double[] x = VectorComputer.computeVectorX(fixedA, fixedB, alpha, beta, l, K);
+            // even in this case we replace K with the actual number of centroids computed by Kmeans
+            double[] x = VectorComputer.computeVectorX(fixedA, fixedB, alpha, beta, l, numCluster);
 
-            for (int j = 0; j < K; j++) {
+            // update centroids
+            for (int j = 0; j < numCluster; j++) {
                 if (l[j] == 0) {
                     C[j] = muA[j];
                 } else {
