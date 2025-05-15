@@ -7,6 +7,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.codehaus.janino.Java;
 import scala.Tuple2;
 import scala.Tuple3;
@@ -116,6 +117,7 @@ public class G89HW2 {
                 classB = classCount._2();
             }
         }
+
         // print command-line arguments
         System.out.println("Input file = " + args[0]
                 + ", L = " + L
@@ -184,7 +186,7 @@ class myMethodsHW2 {
         JavaPairRDD<String, Integer> classItems;
         classItems = U
                 .mapToPair((element) -> new Tuple2<>(element._2(), 1))
-                .reduceByKey((x, y) -> x + y);
+                .reduceByKey((x, y) -> x + y).cache();
 
         // The function collect takes all the data stored in the RDD and puts
         // it into a list; the RDD is sufficiently small to allow us to do so
@@ -205,6 +207,14 @@ class myMethodsHW2 {
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         // End of code to compute NA, NB
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // GETTING THE SPARK CONTEXT. IS THIS SAFE?
+        JavaSparkContext sc = JavaSparkContext.fromSparkContext(U.context());
+        //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // BROADCASTING
+        //Broadcast<Integer> classABroadcast = sc.broadcast(classA);
+        //Broadcast<Integer> classBBroadcast = sc.broadcast(classB);
 
         // Initialization of the set C of centroids using kmeans|| (0 iteration of
         // Lloyd's algorithm)
@@ -240,8 +250,7 @@ class myMethodsHW2 {
                         new Tuple2<Integer, Vector>(1, element._1())));
                 // returning an iterator as in all flatMapToPair functions
                 return clusterPoint.iterator();
-
-            });
+            }).cache();
             auxSums = clustering.reduceByKey((x, y) -> {
                 // this method has to return element of the same type of the input
                 // computing various sums
@@ -249,20 +258,16 @@ class myMethodsHW2 {
                 Vector sumVectors = myMethodsHW2.SumVectors(x._2(), y._2());
                 return new Tuple2<Integer, Vector>(numElements, sumVectors);
             }).collect();
+
             // initialize variables as arrays of size K = number of clusters
             double[] alpha = new double[K];
             double[] beta = new double[K];
             Vector[] muA = new Vector[K];
             Vector[] muB = new Vector[K];
-            // we need to initialize muA and muB to be zero vectors, otherwise if a point of
-            // a specific class doesn't belong to a cluster, then the mu vector remains with
-            // a null entry, but we want it to be a zero entry
-            for (int k = 0; k < K; k++) {
-                muA[k] = Vectors.zeros(vectLen);
-                muB[k] = Vectors.zeros(vectLen);
-            }
+
 
             double[] l = new double[K];
+
             // code to populate alpha, beta, muA, muB
             for (Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>> element : auxSums) {
                 int clusterCenterIdx = element._1()._1();
@@ -282,10 +287,26 @@ class myMethodsHW2 {
                 }
             }
 
+
             // populate the l vector
+            // we need to check if muA and muB have null components; it might happen if no points of
+            // a specific class don't belong to a cluster
             for (int j = 0; j < l.length; j++) {
-                l[j] = Math.sqrt(Vectors.sqdist(muA[j], muB[j]));
+                if (muA[j] == null) {
+                    muA[j] = muB[j];
+                    l[j] = 0;
+                } else if (muB[j] == null) {
+                    muB[j] = muA[j];
+                    l[j] = 0;
+                } else {
+                    l[j] = Math.sqrt(Vectors.sqdist(muA[j], muB[j]));
+                }
             }
+
+            //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            // BROADCASTING
+            Broadcast<Vector[]> muBBroadcast =  sc.broadcast(muB);
+            Broadcast<Vector[]> muABroadcast =  sc.broadcast(muA);
 
             double fixedA = 0.00;
             double fixedB = 0.00;
@@ -302,9 +323,9 @@ class myMethodsHW2 {
                         Vector point = element._2()._2();
                         double distance;
                         if (demoClass.equals("A")) {
-                            distance = Vectors.sqdist(point, muA[clusterIdx]);
+                            distance = Vectors.sqdist(point, muABroadcast.value()[clusterIdx]);
                         } else {
-                            distance = Vectors.sqdist(point, muB[clusterIdx]);
+                            distance = Vectors.sqdist(point, muBBroadcast.value()[clusterIdx]);
                         }
                         distFromMu.add(new Tuple2<>(element._1(), distance));
                         return distFromMu.iterator();
@@ -330,13 +351,19 @@ class myMethodsHW2 {
             double[] x = VectorComputer.computeVectorX(fixedA, fixedB, alpha, beta, l, K);
 
             for (int j = 0; j < K; j++) {
-                C[j] = myMethodsHW2.VectorDivision(
-                        (myMethodsHW2.SumVectors(
-                                myMethodsHW2.VectorMultiplication(muA[j], (l[j] - x[j])),
-                                myMethodsHW2.VectorMultiplication(muB[j], x[j]))),
-                        l[j]);
+                if (l[j] == 0) {
+                    C[j] = muA[j];
+                } else {
+                    C[j] = myMethodsHW2.VectorDivision(
+                            (myMethodsHW2.SumVectors(
+                                    myMethodsHW2.VectorMultiplication(muA[j], (l[j] - x[j])),
+                                    myMethodsHW2.VectorMultiplication(muB[j], x[j]))),
+                            l[j]);
+                }
             }
 
+            muABroadcast.destroy();
+            muBBroadcast.destroy();
             // end of for cycle of the algorithm
         }
 
