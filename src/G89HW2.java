@@ -258,20 +258,16 @@ class myMethodsHW2 {
                 Vector sumVectors = myMethodsHW2.SumVectors(x._2(), y._2());
                 return new Tuple2<Integer, Vector>(numElements, sumVectors);
             }).collect();
+
             // initialize variables as arrays of size K = number of clusters
             double[] alpha = new double[K];
             double[] beta = new double[K];
             Vector[] muA = new Vector[K];
             Vector[] muB = new Vector[K];
-            // we need to initialize muA and muB to be zero vectors, otherwise if a point of
-            // a specific class doesn't belong to a cluster, then the mu vector remains with
-            // a null entry, but we want it to be a zero entry
-            for (int k = 0; k < K; k++) {
-                muA[k] = Vectors.zeros(vectLen);
-                muB[k] = Vectors.zeros(vectLen);
-            }
+
 
             double[] l = new double[K];
+
             // code to populate alpha, beta, muA, muB
             for (Tuple2<Tuple2<Integer, String>, Tuple2<Integer, Vector>> element : auxSums) {
                 int clusterCenterIdx = element._1()._1();
@@ -291,16 +287,26 @@ class myMethodsHW2 {
                 }
             }
 
+
+            // populate the l vector
+            // we need to check if muA and muB have null components; it might happen if no points of
+            // a specific class don't belong to a cluster
+            for (int j = 0; j < l.length; j++) {
+                if (muA[j] == null) {
+                    muA[j] = muB[j];
+                    l[j] = 0;
+                } else if (muB[j] == null) {
+                    muB[j] = muA[j];
+                    l[j] = 0;
+                } else {
+                    l[j] = Math.sqrt(Vectors.sqdist(muA[j], muB[j]));
+                }
+            }
+
             //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             // BROADCASTING
             Broadcast<Vector[]> muBBroadcast =  sc.broadcast(muB);
             Broadcast<Vector[]> muABroadcast =  sc.broadcast(muA);
-
-
-            // populate the l vector
-            for (int j = 0; j < l.length; j++) {
-                l[j] = Math.sqrt(Vectors.sqdist(muA[j], muB[j]));
-            }
 
             double fixedA = 0.00;
             double fixedB = 0.00;
@@ -345,11 +351,15 @@ class myMethodsHW2 {
             double[] x = VectorComputer.computeVectorX(fixedA, fixedB, alpha, beta, l, K);
 
             for (int j = 0; j < K; j++) {
-                C[j] = myMethodsHW2.VectorDivision(
-                        (myMethodsHW2.SumVectors(
-                                myMethodsHW2.VectorMultiplication(muA[j], (l[j] - x[j])),
-                                myMethodsHW2.VectorMultiplication(muB[j], x[j]))),
-                        l[j]);
+                if (l[j] == 0) {
+                    C[j] = muA[j];
+                } else {
+                    C[j] = myMethodsHW2.VectorDivision(
+                            (myMethodsHW2.SumVectors(
+                                    myMethodsHW2.VectorMultiplication(muA[j], (l[j] - x[j])),
+                                    myMethodsHW2.VectorMultiplication(muB[j], x[j]))),
+                            l[j]);
+                }
             }
 
             muABroadcast.destroy();
