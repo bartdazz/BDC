@@ -14,8 +14,8 @@ public class G89GEN {
         // bcs the proportion between the fair and the classic remains almost the same
         /*
          * The idea is to create each cluster as formed by 1 point of class A with
-         * coordinates (-10, 10 * i) and many points of class B with coordinates
-         * (10, 10 * i).
+         * coordinates (-10, 30 * i) and many points of class B with coordinates
+         * (10, 30 * i).
          * In this way the Lloyd's clustering will focus where there are
          * more points, discriminating the minority class, and i'ts cluster center will
          * be close to the points of class B.
