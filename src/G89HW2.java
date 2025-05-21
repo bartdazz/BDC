@@ -158,11 +158,6 @@ public class G89HW2 {
                 .println("Time to compute objective with standard centers = " + (endPhiStand - startPhiStand) + " ms");
         System.out.println("Time to compute objective with fair centers = " + (endPhiFair - startPhiFair) + " ms");
 
-        // TO BE REMOVED
-        // System.out.println("Standard centroids");
-        // mymethods.MRPrintStatistics(inputPoints, cStand);
-        // System.out.println("Fair centroids");
-        // mymethods.MRPrintStatistics(inputPoints, cFair);
         // Stop SparkContext at the end
         sc.close();
     }
@@ -211,6 +206,7 @@ class myMethodsHW2 {
 
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         // GETTING THE SPARK CONTEXT.
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         JavaSparkContext sc = JavaSparkContext.fromSparkContext(U.context());
 
         // Initialization of the set C of centroids using kmeans|| (0 iteration of
@@ -367,6 +363,7 @@ class myMethodsHW2 {
         return C;
     }
 
+    // Returns the element-wise sum of two vectors v1 and v2
     public static Vector SumVectors(Vector v1, Vector v2) {
         double[] sum = new double[v1.size()];
         for (int i = 0; i < v1.size(); i++) {
@@ -375,6 +372,7 @@ class myMethodsHW2 {
         return Vectors.dense(sum);
     }
 
+    // Divides each element of the vector v by the scalar n
     public static Vector VectorDivision(Vector v, double n) {
         double[] res = new double[v.size()];
         for (int i = 0; i < v.size(); i++) {
@@ -383,6 +381,7 @@ class myMethodsHW2 {
         return Vectors.dense(res);
     }
 
+    // Multiplies each element of the vector v by the scalar n
     public static Vector VectorMultiplication(Vector v, double n) {
         double[] res = new double[v.size()];
         for (int i = 0; i < v.size(); i++) {
