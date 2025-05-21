@@ -1,21 +1,13 @@
-
-/**
- * G89GEN
- */
 import java.io.IOException;
 
 public class G89GEN {
 
     public static void main(String[] args) throws IOException {
-        // %%%%%%%%%%%%% YOU CAN ADD A BOUND TO THE MINIMUM NUMBER OF POINTS
-        // AND ALSO TRY TO SUGGEST THE RIGHT NUMBER OF POINTS TO USE BASED ON THE NUMBER
-        // OF CLUSTERS
-        // note that the distance between points doesn't make all that difference
-        // bcs the proportion between the fair and the classic remains almost the same
         /*
-         * The idea is to create each cluster as formed by 1 point of class A with
-         * coordinates (-10, 30 * i) and many points of class B with coordinates
-         * (10, 30 * i).
+         * Given as an input two integers, respectively the number of points
+         * and the number clusters, the idea is to create each cluster as formed by one
+         * point of class A with coordinates (-10, 30 * i) and many points of class
+         * B with coordinates (10, 30 * i).
          * In this way the Lloyd's clustering will focus where there are
          * more points, discriminating the minority class, and i'ts cluster center will
          * be close to the points of class B.
@@ -23,6 +15,8 @@ public class G89GEN {
          * of the minority class and it will set some cluster's centers near the points
          * of class A
          */
+
+        // Reading the input
         int N = Integer.parseInt(args[0]);
         int K = Integer.parseInt(args[1]);
 
@@ -34,13 +28,15 @@ public class G89GEN {
         double halfLateralStep = 10.0;
         double verticalStep = 30.0;
 
+        // Generation of points belonging to class A
         for (int i = 0; i < K; i++) {
             System.out.println(-halfLateralStep + "," + (0.0 + verticalStep * i) + ",A");
         }
 
-        int nB = (N - K) / K; // number of points of class B belonging to each cluster
-        int nBLast = nB + (N - K) % K; // number of points of class B belonging to the last cluster
+        int nB = (N - K) / K;           // number of points of class B belonging to each cluster
+        int nBLast = nB + (N - K) % K;  // number of points of class B belonging to the last cluster
 
+        // Generation of points belonging to class B
         for (int i = 0; i < K - 1; i++) {
             for (int j = 0; j < nB; j++) {
                 System.out.println(halfLateralStep + "," + (0.0 + verticalStep * i) + ",B");
