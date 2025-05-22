@@ -1,23 +1,14 @@
 import java.io.IOException;
-
-import org.apache.commons.math3.analysis.function.Sqrt;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
-import org.codehaus.janino.Java;
 import scala.Tuple2;
-import scala.Tuple3;
-
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
-
 import org.apache.spark.mllib.clustering.KMeans;
 import org.apache.spark.mllib.clustering.KMeansModel;
-
 import java.util.*;
 
 public class G89HW2 {
@@ -146,8 +137,8 @@ public class G89HW2 {
         double phiFair = myMethodsHW2.MRComputeFairObjective(inputPoints, cFair);
         long endPhiFair = System.currentTimeMillis();
 
-        System.out.println("Fair Objective with Standard Centers = " + phiStand);
-        System.out.println("Fair Objective with Fair Centers = " + phiFair);
+        System.out.printf("Fair Objective with Standard Centers = %.4f\n", phiStand);
+        System.out.printf("Fair Objective with Fair Centers = %.4f\n", phiFair);
 
         // ####################################################################
         // PRINT TIME STATISTICS
