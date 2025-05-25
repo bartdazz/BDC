@@ -123,13 +123,8 @@ public class G89HW3 {
         ArrayList<Long> distinctKeys = new ArrayList<>(histogram.keySet());
         Collections.sort(distinctKeys, Collections.reverseOrder());
         System.out.println("Largest item = " + distinctKeys.get(0));
-
     }
 }
 
 class myMethodsHW3 {
-public static int Hashfun(Integer x, Integer a, Integer b) {
-    int p = 8191;
-    return 0;
-}
 }
