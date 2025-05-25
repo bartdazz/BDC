@@ -1,0 +1,135 @@
+import org.apache.hadoop.util.hash.Hash;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.StorageLevels;
+import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.api.java.JavaPairDStream;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import scala.Tuple2;
+
+import java.io.PrintStream;
+import java.util.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class G89HW3 {
+
+    public static void main(String[] args) throws Exception {
+
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        // CHECKING NUMBER OF CMD LINE PARAMETERS
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        if (args.length != 5) {
+            throw new IllegalArgumentException("USAGE: port, threshold, number of items," +
+                    "rows of each sketch, columns of each sketch, number of top frequent items of interest");
+        }
+
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        // SPARK SETUP
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+        SparkConf conf = new SparkConf(true)
+                .setMaster("local[*]")
+                .setAppName("G89HW3");
+
+        // Use batches of less than a second, otherwise you might exhaust the JVM memory.
+        JavaStreamingContext sc = new JavaStreamingContext(conf, Durations.milliseconds(100));
+        sc.sparkContext().setLogLevel("ERROR");
+
+        Semaphore stoppingSemaphore = new Semaphore(1);
+        stoppingSemaphore.acquire();
+
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        // INPUT READING
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+        int portExp = Integer.parseInt(args[0]);
+        int THRESHOLD = Integer.parseInt(args[1]);
+        int D = Integer.parseInt(args[2]);
+        int W = Integer.parseInt(args[3]);
+        int K = Integer.parseInt(args[4]);
+
+        // print command-line arguments
+        System.out.println("Receiving data from port = " + portExp
+                + ", Threshold = " + THRESHOLD
+                + ", D = " + D
+                + ", W = " + W
+                + ", K = " + K);
+
+
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        // DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+        long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
+        streamLength[0]=0L;
+        HashMap<Long, Long> histogram = new HashMap<>(); // Hash Table for the distinct elements
+
+        // CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
+        sc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevels.MEMORY_AND_DISK)
+                // For each batch, to the following.
+                .foreachRDD((batch, time) -> {
+                    // this is working on the batch at time `time`.
+                    if (streamLength[0] < THRESHOLD) {
+                        long batchSize = batch.count();
+                        streamLength[0] += batchSize;
+                        if (batchSize > 0) {
+                            System.out.println("Batch size at time [" + time + "] is: " + batchSize);
+                            // Extract the distinct items from the batch
+                            Map<Long, Long> batchItems = batch
+                                    .mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1L))
+                                    .reduceByKey((i1, i2) -> 1L)
+                                    .collectAsMap();
+                            // Update the streaming state. If the overall count of processed items reaches the
+                            // THRESHOLD value (among all batches processed so far), subsequent items of the
+                            // current batch are ignored, and no further batches will be processed
+                            for (Map.Entry<Long, Long> pair : batchItems.entrySet()) {
+                                if (!histogram.containsKey(pair.getKey())) {
+                                    histogram.put(pair.getKey(), 1L);
+                                }
+                            }
+                            // If we wanted, here we could run some additional code on the global histogram
+                            if (streamLength[0] >= THRESHOLD) {
+                                // Stop receiving and processing further batches
+                                stoppingSemaphore.release();
+                            }
+
+                        }
+                    }
+                });
+
+        // MANAGING STREAMING SPARK CONTEXT
+        System.out.println("Starting streaming engine");
+        sc.start();
+        System.out.println("Waiting for shutdown condition");
+        stoppingSemaphore.acquire();
+        System.out.println("Stopping the streaming engine");
+
+        /* The following command stops the execution of the stream. The first boolean, if true, also
+           stops the SparkContext, while the second boolean, if true, stops gracefully by waiting for
+           the processing of all received data to be completed. You might get some error messages when
+           the program ends, but they will not affect the correctness. You may also try to set the second
+           parameter to true.
+        */
+
+        sc.stop(false, true);
+        System.out.println("Streaming engine stopped");
+
+        // COMPUTE AND PRINT FINAL STATISTICS
+        System.out.println("Number of items processed = " + streamLength[0]);
+        System.out.println("Number of distinct items = " + histogram.size());
+        long max = 0L;
+        ArrayList<Long> distinctKeys = new ArrayList<>(histogram.keySet());
+        Collections.sort(distinctKeys, Collections.reverseOrder());
+        System.out.println("Largest item = " + distinctKeys.get(0));
+
+    }
+}
+
+class myMethodsHW3 {
+public static int Hashfun(Integer x, Integer a, Integer b) {
+    int p = 8191;
+    return 0;
+}
+}
