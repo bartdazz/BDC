@@ -32,7 +32,7 @@ public class G89HW3 {
         SparkConf conf = new SparkConf(true)
                 .setMaster("local[*]")
                 .setAppName("G89HW3");
-
+        
         // Use batches of less than a second, otherwise you might exhaust the JVM memory.
         JavaStreamingContext sc = new JavaStreamingContext(conf, Durations.milliseconds(100));
         sc.sparkContext().setLogLevel("ERROR");
@@ -56,7 +56,6 @@ public class G89HW3 {
                 + ", D = " + D
                 + ", W = " + W
                 + ", K = " + K);
-
 
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         // DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
@@ -123,8 +122,32 @@ public class G89HW3 {
         ArrayList<Long> distinctKeys = new ArrayList<>(histogram.keySet());
         Collections.sort(distinctKeys, Collections.reverseOrder());
         System.out.println("Largest item = " + distinctKeys.get(0));
+
+        // così si inizializzano le hash function e si usano
+        // ci ho messo una vita a capire come fare e farlo in modo così elegante
+        // spero sia utile diocane
+        prova p = new prova();
+        p.Generate(D);
+        System.out.println("prova.myHash(2,1) = " + p.myHash(2,1));
     }
 }
 
 class myMethodsHW3 {
+    }
+class prova{
+    private int[][] V;
+    private int D;
+    public void Generate(Integer size){
+        this.V = new int[size][2];
+        this.D = size;
+        Random rand = new Random();
+        for(int j = 0;j<D;j++) {
+            V[j][1] = rand.nextInt(8191); //  \in {0,1,...,8190} valori di b
+            V[j][0] = rand.nextInt(8190) + 1; //  \in {1,2...,8190} valori di a
+        }
+    }
+    public int myHash(int x,int i){
+        return (((x * V[i][0]) + V[i][1])%8191)%D;
+    }
+
 }
