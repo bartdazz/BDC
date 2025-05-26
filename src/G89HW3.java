@@ -92,9 +92,14 @@ public class G89HW3 {
                         long batchSize = batch.count();
                         streamLength[0] += batchSize;
                         if (batchSize > 0) {
-
-                            // list of Row and Column to be increased in CM
-                            ArrayList<Tuple2<Integer, Integer>> RowCol = new ArrayList<>();
+                            /*
+                            idea to compute the CS:
+                            potremmo associare ad ogni elemento a ((row,col), val)
+                            così da non portarci dietro ogni cosa, poi raggrupare per key
+                            e sommare i secondo termini.
+                            una volta fatto con tutti gli elemnti costruiamo la matrice DxW
+                            con un unica iterazione sulla lista ((row_i,col_i), val)_{i = 1,...., D*W}
+                             */
 
                             //System.out.println("Batch size at time [" + time + "] is: " + batchSize);
                             // Extract the distinct items from the batch
