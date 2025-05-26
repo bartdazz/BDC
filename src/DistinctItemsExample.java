@@ -70,13 +70,22 @@ public class DistinctItemsExample {
         streamLength[0]=0L;
         HashMap<Long, Long> histogram = new HashMap<>(); // Hash Table for the distinct elements
         AtomicInteger batchCounter = new AtomicInteger(0); // aggiunto da giuliano per contare i batches
+        AtomicInteger nonzerobatchCounter = new AtomicInteger(0); // aggiunto da giuliano per contare i batches non zero
         // CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
         sc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevels.MEMORY_AND_DISK)
                 // For each batch, to the following.
                 // BEWARE: the `foreachRDD` method has "at least once semantics", meaning
                 // that the same data might be processed multiple times in case of failure.
                 .foreachRDD((batch, time) -> {
-                    batchCounter.incrementAndGet(); // aggiunto da g per contare i batches
+                    ////////////////////////////////////////////
+                    // aggiunto da g per contare i batches
+                    batchCounter.incrementAndGet();
+                    if (batch.count() != 0){
+                        nonzerobatchCounter.incrementAndGet(); // aggiunto da g per contare i batches non zero
+                    }
+                    ///////////////////////////////////////////
+
+
                     // this is working on the batch at time `time`.
                     if (streamLength[0] < THRESHOLD) {
                         long batchSize = batch.count();
@@ -124,6 +133,7 @@ public class DistinctItemsExample {
         System.out.println("Streaming engine stopped");
 
         // COMPUTE AND PRINT FINAL STATISTICS
+        System.out.println("Number of non-zero batches processed = " + nonzerobatchCounter.get()); // aggiunto da g per contare i batches nonzero
         System.out.println("Number of batches processed = " + batchCounter.get()); // aggiunto da g per contare i batches
         System.out.println("Number of items processed = " + streamLength[0]);
         System.out.println("Number of distinct items = " + histogram.size());
