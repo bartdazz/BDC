@@ -69,13 +69,14 @@ public class DistinctItemsExample {
         long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
         streamLength[0]=0L;
         HashMap<Long, Long> histogram = new HashMap<>(); // Hash Table for the distinct elements
-
+        AtomicInteger batchCounter = new AtomicInteger(0); // aggiunto da giuliano per contare i batches
         // CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
         sc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevels.MEMORY_AND_DISK)
                 // For each batch, to the following.
                 // BEWARE: the `foreachRDD` method has "at least once semantics", meaning
                 // that the same data might be processed multiple times in case of failure.
                 .foreachRDD((batch, time) -> {
+                    batchCounter.incrementAndGet(); // aggiunto da g per contare i batches
                     // this is working on the batch at time `time`.
                     if (streamLength[0] < THRESHOLD) {
                         long batchSize = batch.count();
@@ -123,6 +124,7 @@ public class DistinctItemsExample {
         System.out.println("Streaming engine stopped");
 
         // COMPUTE AND PRINT FINAL STATISTICS
+        System.out.println("Number of batches processed = " + batchCounter.get()); // aggiunto da g per contare i batches
         System.out.println("Number of items processed = " + streamLength[0]);
         System.out.println("Number of distinct items = " + histogram.size());
         long max = 0L;
