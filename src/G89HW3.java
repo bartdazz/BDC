@@ -125,7 +125,7 @@ public class G89HW3 {
 
         // così si inizializzano le hash function e si usano
         // ci ho messo una vita a capire come fare e farlo in modo così elegante
-        // spero sia utile diocane
+        // spero sia utile dihane
         prova p = new prova();
         p.Generate(D);
         System.out.println("prova.myHash(2,1) = " + p.myHash(2,1));
