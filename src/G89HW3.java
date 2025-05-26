@@ -1,6 +1,7 @@
 import org.apache.hadoop.util.hash.Hash;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.StorageLevels;
+import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -32,7 +33,7 @@ public class G89HW3 {
         SparkConf conf = new SparkConf(true)
                 .setMaster("local[*]")
                 .setAppName("G89HW3");
-        
+
         // Use batches of less than a second, otherwise you might exhaust the JVM memory.
         JavaStreamingContext sc = new JavaStreamingContext(conf, Durations.milliseconds(100));
         sc.sparkContext().setLogLevel("ERROR");
@@ -64,11 +65,12 @@ public class G89HW3 {
         // intialize the hash functions
         hfun h1 = new hfun();
         hfun h2 = new hfun();
-        hfun h3 = new hfun();
-        h1.Generate(D);
-        h2.Generate(D);
-        h3.Generate(D);
+        hfun g = new hfun();
+        h1.GenerateH(D);
+        h2.GenerateH(D);
+        g.GenerateH(D);
         // exemple of usage of the i-th function between the h1 ones: h1.myHash(x,i)
+        // exemple of usage of the i-th function between the g ones: g.myHashG(x,i)
 
 
 
@@ -90,7 +92,11 @@ public class G89HW3 {
                         long batchSize = batch.count();
                         streamLength[0] += batchSize;
                         if (batchSize > 0) {
-                            System.out.println("Batch size at time [" + time + "] is: " + batchSize);
+
+                            // list of Row and Column to be increased in CM
+                            ArrayList<Tuple2<Integer, Integer>> RowCol = new ArrayList<>();
+
+                            //System.out.println("Batch size at time [" + time + "] is: " + batchSize);
                             // Extract the distinct items from the batch
                             Map<Long, Long> batchItems = batch
                                     .mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1L))
@@ -154,18 +160,35 @@ class myMethodsHW3 {
 
 class hfun{
     private int[][] V;
+    private int[][] V2;
     private int D;
-    public void Generate(Integer size){
+    public void GenerateH(Integer size){
         this.V = new int[size][2];
+        this.V2 = new int[size][2];
         this.D = size;
         Random rand = new Random();
         for(int j = 0;j<D;j++) {
             V[j][1] = rand.nextInt(8191); //  \in {0,1,...,8190} valori di b
             V[j][0] = rand.nextInt(8190) + 1; //  \in {1,2...,8190} valori di a
+            V2[j][1] = rand.nextInt(8191); //  \in {0,1,...,8190} valori di b
+            V2[j][0] = rand.nextInt(8190) + 1; //  \in {1,2...,8190} valori di a
         }
     }
     public int myHash(int x,int i){
         return (((x * V[i][0]) + V[i][1])%8191)%D; // ((x*a +b) mod p) mod D
+    }
+
+
+    // to generate g_i(x) -> {+1,-1} for i = 1,...,D and x an .
+    // The idea is to generate a unique value given i and x such
+    // that we can generate g_i functions
+    public int myHashG(int x,int i){
+        Random r = new Random();
+        // We set the seed by using the values of V
+        // I used V2 instead of V because if two element does a collision in myHash,
+        // the same happen to myHashG
+        r.setSeed(Math.abs(x*V2[i][0] + V2[i][1]));
+        return (r.nextInt(100000000)%2 == 0) ? 1 : -1;
     }
 
 }
