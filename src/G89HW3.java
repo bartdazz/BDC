@@ -50,20 +50,36 @@ public class G89HW3 {
         int W = Integer.parseInt(args[3]);
         int K = Integer.parseInt(args[4]);
 
-        // print command-line arguments
-        System.out.println("Receiving data from port = " + portExp
-                + ", Threshold = " + THRESHOLD
-                + ", D = " + D
-                + ", W = " + W
-                + ", K = " + K);
 
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         // DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
+        int[][] CM = new int[D][W]; // matrices to compute  conservative count-min sketch
+        int[][] CS = new int[D][W]; // matrices to compute  count sketch
         long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
         streamLength[0]=0L;
         HashMap<Long, Long> histogram = new HashMap<>(); // Hash Table for the distinct elements
+
+        // intialize the hash functions
+        hfun h1 = new hfun();
+        hfun h2 = new hfun();
+        hfun h3 = new hfun();
+        h1.Generate(D);
+        h2.Generate(D);
+        h3.Generate(D);
+        // exemple of usage of the i-th function between the h1 ones: h1.myHash(x,i)
+
+
+
+
+        //initialize the matrices CM and CS
+        for(int j = 0;j<D;j++) {
+            for (int i = 0; i<W;i++){
+                CM[j][i] = 0;
+                CS[j][i] = 0;
+            }
+        }
 
         // CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
         sc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevels.MEMORY_AND_DISK)
@@ -115,26 +131,28 @@ public class G89HW3 {
         sc.stop(false, true);
         System.out.println("Streaming engine stopped");
 
+        // print command-line arguments
+        System.out.println("Receiving data from port = " + portExp
+                + ", Threshold = " + THRESHOLD
+                + ", D = " + D
+                + ", W = " + W
+                + ", K = " + K);
+
         // COMPUTE AND PRINT FINAL STATISTICS
-        System.out.println("Number of items processed = " + streamLength[0]);
-        System.out.println("Number of distinct items = " + histogram.size());
+        System.out.println("Number of distinct items = " + histogram.size()); // da tenere
         long max = 0L;
         ArrayList<Long> distinctKeys = new ArrayList<>(histogram.keySet());
         Collections.sort(distinctKeys, Collections.reverseOrder());
         System.out.println("Largest item = " + distinctKeys.get(0));
 
-        // così si inizializzano le hash function e si usano
-        // ci ho messo una vita a capire come fare e farlo in modo così elegante
-        // spero sia utile dihane
-        prova p = new prova();
-        p.Generate(D);
-        System.out.println("prova.myHash(2,1) = " + p.myHash(2,1));
+
     }
 }
 
 class myMethodsHW3 {
     }
-class prova{
+
+class hfun{
     private int[][] V;
     private int D;
     public void Generate(Integer size){
@@ -147,7 +165,7 @@ class prova{
         }
     }
     public int myHash(int x,int i){
-        return (((x * V[i][0]) + V[i][1])%8191)%D;
+        return (((x * V[i][0]) + V[i][1])%8191)%D; // ((x*a +b) mod p) mod D
     }
 
 }
