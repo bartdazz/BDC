@@ -181,7 +181,7 @@ class hfun{
 
     // to generate g_i(x) -> {+1,-1} for i = 1,...,D and x an .
     // The idea is to generate a unique value given i and x such
-    // that we can generate g_i functions
+    // that we can generate g_i unique
     public int myHashG(int x,int i){
         Random r = new Random();
         // We set the seed by using the values of V
