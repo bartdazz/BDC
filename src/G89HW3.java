@@ -68,6 +68,7 @@ public class G89HW3 {
         Map<Long, Integer> dict_occurrences = new HashMap<>();;
         // list with value and total occurrences to compute \phi(K)
         List<Tuple2<Long, Integer>> total_occ = new ArrayList<>();
+        List<Long> topk_hitters = new ArrayList<>();
 
         // intialize the hash functions
         hfun h1 = new hfun();
@@ -200,10 +201,16 @@ public class G89HW3 {
             Integer value = entry.getValue();
             total_occ.add(new Tuple2<>(key, value));
         }
-        total_occ.sort((a, b) -> b._1().compareTo(a._1()));
+        total_occ.sort((a, b) -> b._2().compareTo(a._2()));
         // instead of having 11, 10, 10, 9, 9, 9, 8, 8, 6 6
-        // in total_occ we have ((11,1),(10,2),(9,3),...)
-        // System.out.println("più grande" + total_occ.get(0)); // prova
+        // in total_occ we have ((number_1 with 11 occ,11),(number_2 with 10 occ,10),(number_3 with 10 occ,10),...)
+
+        topk_hitters = myMethodsHW3.topk(total_occ,K);
+        System.out.println("top K heavy hitters\n" + topk_hitters); // prova
+        System.out.println("Items with the most occ:\n" + total_occ.get(0)); // prova
+        // funziona!!!
+        System.out.println(total_occ.get(0)._1()+" "+myMethodsHW3.CS_occ(CS,total_occ.get(0)._1(), h2,g));
+        System.out.println(myMethodsHW3.av_relative_error(topk_hitters,dict_occurrences,CS,h2,g));
 
 
 
@@ -219,13 +226,68 @@ public class G89HW3 {
 }
 
 class myMethodsHW3 {
+
+    public static double av_relative_error(List<Long> topk_hitters,Map<Long, Integer> dict_occurrences, int[][] CS, hfun h, hfun g){
+        List<Double> results = new ArrayList<>(topk_hitters.size());
+        double average = 0;
+        for(Long val : topk_hitters){
+            int temp_occ = CS_occ(CS, val, h, g);
+            int temp_real_occ = dict_occurrences.get(val);
+            double temp_res = Math.abs(temp_occ-temp_real_occ)/temp_real_occ;
+            results.add(temp_res);
+        }
+        for( double rel_err: results){
+            average += rel_err;
+        }
+        average = average/topk_hitters.size();
+        return average;
     }
+    public static int CS_occ(int[][] CS, Long u, hfun h, hfun g){
+        ArrayList<Integer> f_us = new ArrayList<>(h.getD());
+        for(int j = 0; j<h.getD(); j++){
+            f_us.add(g.myHashG(u,j)*CS[j][h.myHash(u,j)]);
+        }
+        int median = getMedian(f_us);
+        return median;
+    }
+
+    public static int getMedian(List<Integer> f_us) {
+        Collections.sort(f_us);
+        int n = f_us.size();
+        if (n % 2 == 1) { return f_us.get(n / 2);}
+        else { return f_us.get(n / 2 - 1) ;}
+        }
+    /*
+     top-K heavy hitters are defined as the items of u∈Σ whose true frequency is fu≥ϕ(K)
+     so we have to iterate over the vector until i<K or the next
+     */
+    public static List<Long> topk(List<Tuple2<Long, Integer>> total_occ, int K){
+        int i = 0;
+        int phi_K = total_occ.get(K-1)._2();
+        boolean a = true;
+        List<Long> topk_hitters = new ArrayList<>();
+        for (Tuple2<Long, Integer> t : total_occ) {
+            if (t._2() >= phi_K) {
+                topk_hitters.add(t._1());
+            } else {
+                break;
+            }
+        }
+        return topk_hitters;
+    }
+}
 
 class hfun implements java.io.Serializable{
     private int[][] V;
     private int[][] V2;
     private int D;
     private int W;
+    public int getD(){
+        return D;
+    }
+    public int getW(){
+        return W;
+    }
     public void GenerateH(Integer size, Integer mod){
         this.W = mod;
         this.V = new int[size][2];
