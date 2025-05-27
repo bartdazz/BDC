@@ -64,6 +64,10 @@ public class G89HW3 {
         long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
         streamLength[0]=0L;
         HashMap<Long, Long> histogram = new HashMap<>(); // Hash Table for the distinct elements
+        // store total occurrences, key = number, value = occurrences of the key
+        Map<Long, Integer> dict_occurrences = new HashMap<>();;
+        // list with value and total occurrences to compute \phi(K)
+        List<Tuple2<Long, Integer>> total_occ = new ArrayList<>();
 
         // intialize the hash functions
         hfun h1 = new hfun();
@@ -85,7 +89,6 @@ public class G89HW3 {
                 CS[j][i] = 0;
             }
         }
-
         // CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
         sc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevels.MEMORY_AND_DISK)
                 // For each batch, to the following.
@@ -95,6 +98,20 @@ public class G89HW3 {
                         long batchSize = batch.count();
                         streamLength[0] += batchSize;
                         if (batchSize > 0) {
+
+                            /*
+                             * get true frequency with map reduce:
+                             * map : x -> (x,1)
+                             * reduceBy key and sum the values
+                             */
+                            List<Tuple2<Long, Integer>> occurrance;
+                            occurrance = batch.mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1))
+                                    .reduceByKey((x, y) -> x + y).collect();
+
+                            // merge the occurrences in the dictionary of total occurrences
+                            for(Tuple2<Long, Integer> pair : occurrance){
+                                dict_occurrences.put(pair._1(), dict_occurrences.getOrDefault(pair._1(), 0) + pair._2());
+                            }
                             /*
                             idea to compute the CS:
                             potremmo associare ad ogni elemento a ((row,col), val)
@@ -120,20 +137,6 @@ public class G89HW3 {
                             for (Tuple2<Tuple2<Integer, Integer>, Integer> entry : res) {
                                 CS[entry._1()._1()][entry._1()._2()] += entry._2();
                             }
-                            /*
-                            * get true frequency with map reduce:
-                            * map : x -> (x,1)
-                            * reduceBy key and sum the values
-                            */
-                            List<Tuple2<Long, Integer>> occurrance;
-                            occurrance = batch.mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1))
-                                    .reduceByKey((x, y) -> x + y).collect();
-
-                            /*
-                            PROBLEMA:::
-                            non è che così riscrive le occurrance per ogni batch e non le somma?
-                            forse cè da rimetterle insieme in qualche modo
-                             */
 
 
 
@@ -174,7 +177,7 @@ public class G89HW3 {
            parameter to true.
         */
 
-        sc.stop(false, true);
+        sc.stop(true, true);
         System.out.println("Streaming engine stopped");
 
         // print command-line arguments
@@ -185,6 +188,26 @@ public class G89HW3 {
                 + ", K = " + K);
 
         // COMPUTE AND PRINT FINAL STATISTICS
+        /*
+         * To compute the real occurrences of the values we extract from the dictionary
+         * the key and values and store it the List total_occ, then we sort by the number of
+         * occurrences in a non-decreasing order in respect of the value
+         *
+         */
+        total_occ = new ArrayList<>(histogram.size());
+        for (Map.Entry<Long, Integer> entry : dict_occurrences.entrySet()) {
+            Long key = entry.getKey();
+            Integer value = entry.getValue();
+            total_occ.add(new Tuple2<>(key, value));
+        }
+        total_occ.sort((a, b) -> b._1().compareTo(a._1()));
+        // instead of having 11, 10, 10, 9, 9, 9, 8, 8, 6 6
+        // in total_occ we have ((11,1),(10,2),(9,3),...)
+        // System.out.println("più grande" + total_occ.get(0)); // prova
+
+
+
+
         System.out.println("Number of distinct items = " + histogram.size()); // da tenere
         long max = 0L;
         ArrayList<Long> distinctKeys = new ArrayList<>(histogram.keySet());
