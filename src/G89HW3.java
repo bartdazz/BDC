@@ -1,5 +1,6 @@
 import org.apache.hadoop.util.hash.Hash;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.StorageLevels;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.streaming.Durations;
@@ -99,6 +100,20 @@ public class G89HW3 {
                             e sommare i secondo termini.
                             una volta fatto con tutti gli elemnti costruiamo la matrice DxW
                             con un unica iterazione sulla lista ((row_i,col_i), val)_{i = 1,...., D*W}
+
+                            JavaPairRDD<Tuple2<Integer,Integer>,Integer> res; // outuput mapreduce
+                            res = batch.flatMapToPair(s -> {
+                                int x = Integer.parseInt(s);
+                                List<Tuple2<Tuple2<Integer, Integer>, Integer>> out = new ArrayList<>();
+                                for(int j = 0; j<D; j++){
+                                    int[]  coordinate = new int[2];
+                                    int val = g.myHashG(x,j);
+                                    coordinate[0] = j;
+                                    coordinate[1] = h2.myHash(x,j);
+                                    out.add(new Tuple2<>(new Tuple2<>(coordinate[0], coordinate[1]), val));
+                                    }
+                                } )
+
                              */
 
                             //System.out.println("Batch size at time [" + time + "] is: " + batchSize);
