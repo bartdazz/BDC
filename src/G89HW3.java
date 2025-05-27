@@ -105,7 +105,7 @@ public class G89HW3 {
                             */
                             List<Tuple2<Tuple2<Integer, Integer>, Integer>> res; // outuput mapreduce
                             res = batch.flatMapToPair(s -> {
-                                int x = Integer.parseInt(s);
+                                Long x = Long.parseLong(s);
                                 List<Tuple2<Tuple2<Integer, Integer>, Integer>> out = new ArrayList<>();
                                 for (int j = 0; j < D; j++) {
                                     int[] coordinate = new int[2];
@@ -120,6 +120,22 @@ public class G89HW3 {
                             for (Tuple2<Tuple2<Integer, Integer>, Integer> entry : res) {
                                 CS[entry._1()._1()][entry._1()._2()] += entry._2();
                             }
+                            /*
+                            * get true frequency with map reduce:
+                            * map : x -> (x,1)
+                            * reduceBy key and sum the values
+                            */
+                            List<Tuple2<Long, Integer>> occurrance;
+                            occurrance = batch.mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1))
+                                    .reduceByKey((x, y) -> x + y).collect();
+
+                            /*
+                            PROBLEMA:::
+                            non è che così riscrive le occurrance per ogni batch e non le somma?
+                            forse cè da rimetterle insieme in qualche modo
+                             */
+
+
 
                             //System.out.println("Batch size at time [" + time + "] is: " + batchSize);
                             // Extract the distinct items from the batch
@@ -200,16 +216,18 @@ class hfun implements java.io.Serializable{
             V2[j][0] = rand.nextInt(8190) + 1; //  \in {1,2...,8190} valori di a
         }
     }
-    public int myHash(int x,int i){
-        int res1 = Math.floorMod((x * V[i][0]) + V[i][1],8191);
-        return Math.floorMod(res1,W); // ((x*a +b) mod p) mod D
+    public int myHash(Long x,int i){
+        Long res1 = Math.floorMod((x * V[i][0]) + V[i][1],8191);
+        Long a = Math.floorMod(res1,W);
+        int b = a.intValue();
+        return b; // ((x*a +b) mod p) mod D
     }
 
 
     // to generate g_i(x) -> {+1,-1} for i = 1,...,D and x an .
     // The idea is to generate a unique value given i and x such
     // that we can generate g_i unique
-    public int myHashG(int x,int i){
+    public int myHashG(Long x,int i){
         Random r = new Random();
         // We set the seed by using the values of V
         // I used V2 instead of V because if two element does a collision in myHash,
