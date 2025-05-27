@@ -204,13 +204,15 @@ public class G89HW3 {
         total_occ.sort((a, b) -> b._2().compareTo(a._2()));
         // instead of having 11, 10, 10, 9, 9, 9, 8, 8, 6 6
         // in total_occ we have ((number_1 with 11 occ,11),(number_2 with 10 occ,10),(number_3 with 10 occ,10),...)
-
         topk_hitters = myMethodsHW3.topk(total_occ,K);
-        System.out.println("top K heavy hitters\n" + topk_hitters); // prova
-        System.out.println("Items with the most occ:\n" + total_occ.get(0)); // prova
-        // funziona!!!
-        System.out.println(total_occ.get(0)._1()+" "+myMethodsHW3.CS_occ(CS,total_occ.get(0)._1(), h2,g));
-        System.out.println(myMethodsHW3.av_relative_error(topk_hitters,dict_occurrences,CS,h2,g));
+
+        ////////////////////
+        //      DEBUG
+        ////////////////////
+        System.out.println("top K heavy hitters: " + topk_hitters); // prova
+        System.out.println("Items with the most occ:" + total_occ.get(0)); // prova
+        System.out.println("calcolato da CS: " + total_occ.get(0)._1()+","+myMethodsHW3.CS_occ(CS,total_occ.get(0)._1(), h2,g));
+        System.out.println("errore medio: " + myMethodsHW3.rel_err_CS(topk_hitters,dict_occurrences,CS,h2,g));
 
 
 
@@ -227,12 +229,12 @@ public class G89HW3 {
 
 class myMethodsHW3 {
 
-    public static double av_relative_error(List<Long> topk_hitters,Map<Long, Integer> dict_occurrences, int[][] CS, hfun h, hfun g){
+    public static double rel_err_CS(List<Long> topk_hitters,Map<Long, Integer> dict_occurrences, int[][] CS, hfun h, hfun g){
         List<Double> results = new ArrayList<>(topk_hitters.size());
         double average = 0;
         for(Long val : topk_hitters){
-            int temp_occ = CS_occ(CS, val, h, g);
-            int temp_real_occ = dict_occurrences.get(val);
+            double temp_occ = (double) CS_occ(CS, val, h, g);
+            double temp_real_occ = (double) dict_occurrences.get(val);
             double temp_res = Math.abs(temp_occ-temp_real_occ)/temp_real_occ;
             results.add(temp_res);
         }
