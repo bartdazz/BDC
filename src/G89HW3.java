@@ -63,11 +63,11 @@ public class G89HW3 {
         int[][] CS = new int[D][W]; // matrices to compute  count sketch
         long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
         streamLength[0]=0L;
-        HashMap<Long, Long> histogram = new HashMap<>(); // Hash Table for the distinct elements
         // store total occurrences, key = number, value = occurrences of the key
         Map<Long, Integer> dict_occurrences = new HashMap<>();;
         // list with value and total occurrences to compute \phi(K)
         List<Tuple2<Long, Integer>> total_occ = new ArrayList<>();
+        // list of Top-K heavy hitters
         List<Long> topk_hitters = new ArrayList<>();
 
         // intialize the hash functions
@@ -142,7 +142,7 @@ public class G89HW3 {
 
 
                             //System.out.println("Batch size at time [" + time + "] is: " + batchSize);
-                            // Extract the distinct items from the batch
+                            // Exemple to Extract the distinct items from the batch
                             Map<Long, Long> batchItems = batch
                                     .mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1L))
                                     .reduceByKey((i1, i2) -> 1L)
@@ -150,11 +150,6 @@ public class G89HW3 {
                             // Update the streaming state. If the overall count of processed items reaches the
                             // THRESHOLD value (among all batches processed so far), subsequent items of the
                             // current batch are ignored, and no further batches will be processed
-                            for (Map.Entry<Long, Long> pair : batchItems.entrySet()) {
-                                if (!histogram.containsKey(pair.getKey())) {
-                                    histogram.put(pair.getKey(), 1L);
-                                }
-                            }
                             // If we wanted, here we could run some additional code on the global histogram
                             if (streamLength[0] >= THRESHOLD) {
                                 // Stop receiving and processing further batches
@@ -195,7 +190,7 @@ public class G89HW3 {
          * occurrences in a non-decreasing order in respect of the value
          *
          */
-        total_occ = new ArrayList<>(histogram.size());
+        total_occ = new ArrayList<>(dict_occurrences.size());
         for (Map.Entry<Long, Integer> entry : dict_occurrences.entrySet()) {
             Long key = entry.getKey();
             Integer value = entry.getValue();
@@ -216,12 +211,7 @@ public class G89HW3 {
 
 
 
-
-        System.out.println("Number of distinct items = " + histogram.size()); // da tenere
-        long max = 0L;
-        ArrayList<Long> distinctKeys = new ArrayList<>(histogram.keySet());
-        Collections.sort(distinctKeys, Collections.reverseOrder());
-        System.out.println("Largest item = " + distinctKeys.get(0));
+        System.out.println("Number of distinct items = " + dict_occurrences.size()); // da tenere
 
 
     }
