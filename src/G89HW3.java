@@ -32,8 +32,10 @@ public class G89HW3 {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
         SparkConf conf = new SparkConf(true)
-                .setMaster("local[*]")
-                .setAppName("G89HW3");
+                .setAppName("G89HW3")
+                .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
+                .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
+                .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));
 
         // Use batches of less than a second, otherwise you might exhaust the JVM memory.
         JavaStreamingContext sc = new JavaStreamingContext(conf, Durations.milliseconds(100));
@@ -67,9 +69,9 @@ public class G89HW3 {
         hfun h1 = new hfun();
         hfun h2 = new hfun();
         hfun g = new hfun();
-        h1.GenerateH(D);
-        h2.GenerateH(D);
-        g.GenerateH(D);
+        h1.GenerateH(D,W);
+        h2.GenerateH(D,W);
+        g.GenerateH(D,W);
         // exemple of usage of the i-th function between the h1 ones: h1.myHash(x,i)
         // exemple of usage of the i-th function between the g ones: g.myHashG(x,i)
 
@@ -100,21 +102,24 @@ public class G89HW3 {
                             e sommare i secondo termini.
                             una volta fatto con tutti gli elemnti costruiamo la matrice DxW
                             con un unica iterazione sulla lista ((row_i,col_i), val)_{i = 1,...., D*W}
-
-                            JavaPairRDD<Tuple2<Integer,Integer>,Integer> res; // outuput mapreduce
+                            */
+                            List<Tuple2<Tuple2<Integer, Integer>, Integer>> res; // outuput mapreduce
                             res = batch.flatMapToPair(s -> {
                                 int x = Integer.parseInt(s);
                                 List<Tuple2<Tuple2<Integer, Integer>, Integer>> out = new ArrayList<>();
-                                for(int j = 0; j<D; j++){
-                                    int[]  coordinate = new int[2];
-                                    int val = g.myHashG(x,j);
+                                for (int j = 0; j < D; j++) {
+                                    int[] coordinate = new int[2];
+                                    int val = g.myHashG(x, j);
                                     coordinate[0] = j;
-                                    coordinate[1] = h2.myHash(x,j);
+                                    coordinate[1] = h2.myHash(x, j);
                                     out.add(new Tuple2<>(new Tuple2<>(coordinate[0], coordinate[1]), val));
-                                    }
-                                } )
-
-                             */
+                                }
+                                return out.iterator();
+                            }).reduceByKey((x, y) -> x + y).collect();
+                            // update the matrix CS with at most D*W iterations
+                            for (Tuple2<Tuple2<Integer, Integer>, Integer> entry : res) {
+                                CS[entry._1()._1()][entry._1()._2()] += entry._2();
+                            }
 
                             //System.out.println("Batch size at time [" + time + "] is: " + batchSize);
                             // Extract the distinct items from the batch
@@ -135,7 +140,6 @@ public class G89HW3 {
                                 // Stop receiving and processing further batches
                                 stoppingSemaphore.release();
                             }
-
                         }
                     }
                 });
@@ -178,11 +182,13 @@ public class G89HW3 {
 class myMethodsHW3 {
     }
 
-class hfun{
+class hfun implements java.io.Serializable{
     private int[][] V;
     private int[][] V2;
     private int D;
-    public void GenerateH(Integer size){
+    private int W;
+    public void GenerateH(Integer size, Integer mod){
+        this.W = mod;
         this.V = new int[size][2];
         this.V2 = new int[size][2];
         this.D = size;
@@ -195,7 +201,8 @@ class hfun{
         }
     }
     public int myHash(int x,int i){
-        return (((x * V[i][0]) + V[i][1])%8191)%D; // ((x*a +b) mod p) mod D
+        int res1 = Math.floorMod((x * V[i][0]) + V[i][1],8191);
+        return Math.floorMod(res1,W); // ((x*a +b) mod p) mod D
     }
 
 
@@ -208,7 +215,7 @@ class hfun{
         // I used V2 instead of V because if two element does a collision in myHash,
         // the same happen to myHashG
         r.setSeed(Math.abs(x*V2[i][0] + V2[i][1]));
-        return (r.nextInt(100000000)%2 == 0) ? 1 : -1;
+        return (Math.floorMod(r.nextInt(100000000),2) == 0) ? 1 : -1;
     }
 
 }
