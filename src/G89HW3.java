@@ -211,7 +211,20 @@ public class G89HW3 {
 
 
 
+
+
         System.out.println("Number of distinct items = " + dict_occurrences.size()); // da tenere
+        if(K<=10){
+            List<Tuple2<Long,Integer>> topk_true_frq = new ArrayList<>();
+            List<Tuple2<Long,Integer>> topk_est_frq = new ArrayList<>();
+            for(Long e : topk_hitters){
+                topk_true_frq.add(new Tuple2<>(e, dict_occurrences.get(e)));
+                topk_est_frq.add(new Tuple2<>(e, myMethodsHW3.CS_occ(CS,e,h2,g)));
+            }
+            System.out.println("true top-"+K+" heavy hitters frequencies: " + topk_true_frq);
+            System.out.println("estimated top-"+K+" heavy hitters frequencies: " + topk_est_frq);
+
+        }
 
 
     }
@@ -239,8 +252,7 @@ class myMethodsHW3 {
         for(int j = 0; j<h.getD(); j++){
             f_us.add(g.myHashG(u,j)*CS[j][h.myHash(u,j)]);
         }
-        int median = getMedian(f_us);
-        return median;
+        return getMedian(f_us);
     }
 
     public static int getMedian(List<Integer> f_us) {
