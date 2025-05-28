@@ -99,11 +99,12 @@ public class G89HW3 {
                         long batchSize = batch.count();
                         streamLength[0] += batchSize;
                         if (batchSize > 0) {
-
+                            // &&&&&&&&&&&&&&&&&&&&&&&&
+                            // COMPUTE TRUE FREQUENCIES
+                            // &&&&&&&&&&&&&&&&&&&&&&&&
                             /*
                              * get true frequency with map reduce:
-                             * map : x -> (x,1)
-                             * reduceBy key and sum the values
+                             * map : x -> (x,1), reduceBy key and sum the values
                              */
                             List<Tuple2<Long, Integer>> occurrance;
                             occurrance = batch.mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1))
@@ -113,6 +114,10 @@ public class G89HW3 {
                             for(Tuple2<Long, Integer> pair : occurrance){
                                 dict_occurrences.put(pair._1(), dict_occurrences.getOrDefault(pair._1(), 0) + pair._2());
                             }
+
+                            // &&&&&&&&&&&&&
+                            // COMPUTE CS
+                            // &&&&&&&&&&&&&
                             /*
                             idea to compute the CS:
                             potremmo associare ad ogni elemento a ((row,col), val)
@@ -138,19 +143,18 @@ public class G89HW3 {
                             for (Tuple2<Tuple2<Integer, Integer>, Integer> entry : res) {
                                 CS[entry._1()._1()][entry._1()._2()] += entry._2();
                             }
+                            // &&&&&&&&&&&&&
+                            // COMPUTE CM
+                            // &&&&&&&&&&&&&
+                            // extract the elements in the batch
+                            List<Long> batchElements = batch.map(Long::parseLong).collect();
+                            // update CM for every element in batchElements
+                            for(Long e : batchElements ){
+                                myMethodsHW3.updateCM(CM,e,h1);
+                            }
 
 
-
-                            //System.out.println("Batch size at time [" + time + "] is: " + batchSize);
-                            // Exemple to Extract the distinct items from the batch
-                            Map<Long, Long> batchItems = batch
-                                    .mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1L))
-                                    .reduceByKey((i1, i2) -> 1L)
-                                    .collectAsMap();
-                            // Update the streaming state. If the overall count of processed items reaches the
-                            // THRESHOLD value (among all batches processed so far), subsequent items of the
-                            // current batch are ignored, and no further batches will be processed
-                            // If we wanted, here we could run some additional code on the global histogram
+                            // check the threshold
                             if (streamLength[0] >= THRESHOLD) {
                                 // Stop receiving and processing further batches
                                 stoppingSemaphore.release();
@@ -197,22 +201,25 @@ public class G89HW3 {
             total_occ.add(new Tuple2<>(key, value));
         }
         total_occ.sort((a, b) -> b._2().compareTo(a._2()));
-        // instead of having 11, 10, 10, 9, 9, 9, 8, 8, 6 6
+        // instead of having 11, 10, 10, 9, 9, 9, 8, 8, 6, 6
         // in total_occ we have ((number_1 with 11 occ,11),(number_2 with 10 occ,10),(number_3 with 10 occ,10),...)
-        topk_hitters = myMethodsHW3.topk(total_occ,K);
+        topk_hitters = myMethodsHW3.topk(total_occ,K); // List<Long> of top_K heavy hitters
+
 
         ////////////////////
         //      DEBUG
         ////////////////////
         System.out.println("top K heavy hitters: " + topk_hitters); // prova
         System.out.println("Items with the most occ:" + total_occ.get(0)); // prova
-        System.out.println("calcolato da CS: " + total_occ.get(0)._1()+","+myMethodsHW3.CS_occ(CS,total_occ.get(0)._1(), h2,g));
-        System.out.println("errore medio: " + myMethodsHW3.rel_err_CS(topk_hitters,dict_occurrences,CS,h2,g));
+        System.out.println("calcolato da CS: " + total_occ.get(0)._1()+","+
+                myMethodsHW3.CS_occ(CS,total_occ.get(0)._1(), h2,g));
+        System.out.println("calcolato da CM: " + total_occ.get(0)._1()+","+
+                myMethodsHW3.CM_occ(CM,total_occ.get(0)._1(), h1));
 
 
 
-
-
+        System.out.println("errore medio da CM: " + myMethodsHW3.rel_err_CM(topk_hitters,dict_occurrences,CM,h1)); // da tenere
+        System.out.println("errore medio da CS: " + myMethodsHW3.rel_err_CS(topk_hitters,dict_occurrences,CS,h2,g)); // da tenere
         System.out.println("Number of distinct items = " + dict_occurrences.size()); // da tenere
         if(K<=10){
             List<Tuple2<Long,Integer>> topk_true_frq = new ArrayList<>();
@@ -231,7 +238,50 @@ public class G89HW3 {
 }
 
 class myMethodsHW3 {
+    public static void updateCM(int[][] C, Long u, hfun h){
+        int D = h.getD();
+        List<Tuple2<Integer, Integer>> pairs = new ArrayList<>(); // pairs to be updated
+        int val_min = C[0][h.myHash(u,0)]; // initialize the minimum value
 
+        for(int i = 0; i<D; i++){
+            int[] temp_pairs = {i,h.myHash(u,i)};
+            int temp_val = C[temp_pairs[0]][temp_pairs[1]];
+            if(temp_val  == val_min){
+                // if the current value of i-th row is the same to the
+                // minimal value add the coordinate to the pairs
+                pairs.add(new Tuple2<>(i,h.myHash(u,i)));
+            }
+            if(temp_val < val_min){
+                // if the current value of i-th row is the same to the
+                // minimal value we are not interested in  the pairs we selected,
+                // we delete all the ones saved and add the new one.
+                // we also update the val_min
+                val_min = temp_val;
+                pairs.clear(); // Removes all elements from the list
+                pairs.add(new Tuple2<>(temp_pairs[0],temp_pairs[1]));
+            }
+            // if temp_val > val_min we don't care about the current temp_pairs
+        }
+        // now we can update the C matrix
+        for(Tuple2<Integer, Integer> p : pairs){
+            C[p._1()][p._2()] += 1;
+        }
+    }
+    public static double rel_err_CM(List<Long> topk_hitters,Map<Long, Integer> dict_occurrences, int[][] CM, hfun h){
+        List<Double> results = new ArrayList<>(topk_hitters.size());
+        double average = 0;
+        for(Long val : topk_hitters){
+            double temp_occ = (double) CM_occ(CM, val, h);
+            double temp_real_occ = (double) dict_occurrences.get(val);
+            double temp_res = Math.abs(temp_occ - temp_real_occ)/temp_real_occ;
+            results.add(temp_res);
+        }
+        for( double rel_err: results){
+            average += rel_err;
+        }
+        average = average/topk_hitters.size();
+        return average;
+    }
     public static double rel_err_CS(List<Long> topk_hitters,Map<Long, Integer> dict_occurrences, int[][] CS, hfun h, hfun g){
         List<Double> results = new ArrayList<>(topk_hitters.size());
         double average = 0;
@@ -253,6 +303,18 @@ class myMethodsHW3 {
             f_us.add(g.myHashG(u,j)*CS[j][h.myHash(u,j)]);
         }
         return getMedian(f_us);
+    }
+    public static int CM_occ(int[][] CM, Long u, hfun h){
+        // initialize the minimal value
+        int min_val = CM[0][h.myHash(u,0)];
+        for(int j = 0; j<h.getD(); j++){
+            int temp_val = CM[j][h.myHash(u,j)];
+            if(temp_val < min_val){
+                // update the min_val
+                min_val = temp_val;
+            }
+        }
+        return min_val;
     }
 
     public static int getMedian(List<Integer> f_us) {
@@ -322,7 +384,7 @@ class hfun implements java.io.Serializable{
         // I used V2 instead of V because if two element does a collision in myHash,
         // the same happen to myHashG
         r.setSeed(Math.abs(x*V2[i][0] + V2[i][1]));
-        return (Math.floorMod(r.nextInt(100000000),2) == 0) ? 1 : -1;
+        return (r.nextInt(2) == 0) ? 1 : -1;
     }
 
 }
