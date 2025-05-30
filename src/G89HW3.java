@@ -146,11 +146,21 @@ public class G89HW3 {
                             // &&&&&&&&&&&&&
                             // COMPUTE CM
                             // &&&&&&&&&&&&&
-                            // extract the elements in the batch
-                            List<Long> batchElements = batch.map(Long::parseLong).collect();
-                            // update CM for every element in batchElements
-                            for(Long e : batchElements ){
-                                myMethodsHW3.updateCM(CM,e,h1);
+                            List<Tuple2<Tuple2<Integer, Integer>,Integer>> rescm; // outuput mapreduce
+                            rescm = batch.flatMapToPair(s -> {
+                                Long x = Long.parseLong(s);
+                                List<Tuple2<Tuple2<Integer, Integer>,Integer>> out1 = new ArrayList<>();
+                                for (int j = 0; j < D; j++) {
+                                    int[] coordinate = new int[2];
+                                    coordinate[0] = j;
+                                    coordinate[1] = h1.myHash(x, j);
+                                    out1.add(new Tuple2<>(new Tuple2<>(coordinate[0], coordinate[1]),1));
+                                }
+                                return out1.iterator();
+                            }).reduceByKey((x, y) -> x + y).collect();
+                            // update the matrix CM with at most D*W iterations
+                            for (Tuple2<Tuple2<Integer, Integer>,Integer> entry : rescm) {
+                                CM[entry._1()._1()][entry._1()._2()] += entry._2();
                             }
 
 
@@ -238,6 +248,7 @@ public class G89HW3 {
 }
 
 class myMethodsHW3 {
+    /* TOLTO PERCHè NON BISOGNA PIù USARE CONSERVATIVE COUNT MIN
     public static void updateCM(int[][] C, Long u, hfun h){
         int D = h.getD();
         List<Tuple2<Integer, Integer>> pairs = new ArrayList<>(); // pairs to be updated
@@ -267,6 +278,7 @@ class myMethodsHW3 {
             C[p._1()][p._2()] += 1;
         }
     }
+    */
     public static double rel_err_CM(List<Long> topk_hitters,Map<Long, Integer> dict_occurrences, int[][] CM, hfun h){
         List<Double> results = new ArrayList<>(topk_hitters.size());
         double average = 0;
@@ -328,9 +340,7 @@ class myMethodsHW3 {
      so we have to iterate over the vector until i<K or the next
      */
     public static List<Long> topk(List<Tuple2<Long, Integer>> total_occ, int K){
-        int i = 0;
         int phi_K = total_occ.get(K-1)._2();
-        boolean a = true;
         List<Long> topk_hitters = new ArrayList<>();
         for (Tuple2<Long, Integer> t : total_occ) {
             if (t._2() >= phi_K) {
