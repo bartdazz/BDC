@@ -257,25 +257,6 @@ public class G89HW3 {
 
     }
 }
-/*
-Port = 8886 T = 200000 D = 7 W = 100 K = 10
-Number of processed items = 402352
-Number of distinct items  = 80568
-Number of Top-K Heavy Hitters = 10
-Avg Relative Error for Top-K Heavy Hitters with CM = 0.023966842482549187
-Avg Relative Error for Top-K Heavy Hitters with CS = 4.65650589596598E-4
-Top-K Heavy Hitters:
-Item 195773912 True Frequency = 32311 Estimated Frequency with CM = 33095
-Item 339323283 True Frequency = 32142 Estimated Frequency with CM = 32879
-Item 434415286 True Frequency = 31953 Estimated Frequency with CM = 32714
-Item 641486445 True Frequency = 32118 Estimated Frequency with CM = 32875
-Item 819911327 True Frequency = 32371 Estimated Frequency with CM = 33133
-Item 870070186 True Frequency = 32160 Estimated Frequency with CM = 32925
-Item 1472610405 True Frequency = 32255 Estimated Frequency with CM = 33028
-Item 1590293530 True Frequency = 31771 Estimated Frequency with CM = 32541
-Item 1690049656 True Frequency = 32362 Estimated Frequency with CM = 33159
-Item 1936875793 True Frequency = 32286 Estimated Frequency with CM = 33091
- */
 
 class myMethodsHW3 {
     /* TOLTO PERCHè NON BISOGNA PIù USARE CONSERVATIVE COUNT MIN
