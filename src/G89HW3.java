@@ -32,10 +32,8 @@ public class G89HW3 {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
         SparkConf conf = new SparkConf(true)
-                .setAppName("G89HW3")
-                .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
-                .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
-                .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));
+                .setMaster("local[*]") // remove this line if running on the cluster
+                .setAppName("DistinctExample");
 
         // Use batches of less than a second, otherwise you might exhaust the JVM memory.
         JavaStreamingContext sc = new JavaStreamingContext(conf, Durations.milliseconds(100));
