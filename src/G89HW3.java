@@ -32,10 +32,8 @@ public class G89HW3 {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
         SparkConf conf = new SparkConf(true)
-                .setAppName("G89HW3")
-                .setMaster(System.getenv().getOrDefault("SPARK_MASTER", "local[*]"))
-                .set("spark.driver.host", System.getenv().getOrDefault("SPARK_DRIVER_HOST", "localhost"))
-                .set("spark.driver.bindAddress", System.getenv().getOrDefault("SPARK_BIND_ADDRESS", "127.0.0.1"));
+                .setMaster("local[*]") // remove this line if running on the cluster
+                .setAppName("DistinctExample");
 
         // Use batches of less than a second, otherwise you might exhaust the JVM memory.
         JavaStreamingContext sc = new JavaStreamingContext(conf, Durations.milliseconds(100));
@@ -174,11 +172,11 @@ public class G89HW3 {
                 });
 
         // MANAGING STREAMING SPARK CONTEXT
-        System.out.println("Starting streaming engine");
+        //System.out.println("Starting streaming engine");
         sc.start();
-        System.out.println("Waiting for shutdown condition");
+        //System.out.println("Waiting for shutdown condition");
         stoppingSemaphore.acquire();
-        System.out.println("Stopping the streaming engine");
+        //System.out.println("Stopping the streaming engine");
 
         /* The following command stops the execution of the stream. The first boolean, if true, also
            stops the SparkContext, while the second boolean, if true, stops gracefully by waiting for
@@ -188,14 +186,14 @@ public class G89HW3 {
         */
 
         sc.stop(true, true);
-        System.out.println("Streaming engine stopped");
+        //System.out.println("Streaming engine stopped");
 
         // print command-line arguments
-        System.out.println("Receiving data from port = " + portExp
-                + ", Threshold = " + THRESHOLD
-                + ", D = " + D
-                + ", W = " + W
-                + ", K = " + K);
+        System.out.println("Port = " + portExp
+                + " T = " + THRESHOLD
+                + " D = " + D
+                + " W = " + W
+                + " K = " + K);
 
         // COMPUTE AND PRINT FINAL STATISTICS
         /*
@@ -219,21 +217,32 @@ public class G89HW3 {
         ////////////////////
         //      DEBUG
         ////////////////////
+        /*
         System.out.println("top K heavy hitters: " + topk_hitters); // prova
         System.out.println("Items with the most occ:" + total_occ.get(0)); // prova
         System.out.println("calcolato da CS: " + total_occ.get(0)._1()+","+
                 myMethodsHW3.CS_occ(CS,total_occ.get(0)._1(), h2,g));
         System.out.println("calcolato da CM: " + total_occ.get(0)._1()+","+
                 myMethodsHW3.CM_occ(CM,total_occ.get(0)._1(), h1));
+        */
 
-
-
-        System.out.println("errore medio da CM: " + myMethodsHW3.rel_err_CM(topk_hitters,dict_occurrences,CM,h1)); // da tenere
-        System.out.println("errore medio da CS: " + myMethodsHW3.rel_err_CS(topk_hitters,dict_occurrences,CS,h2,g)); // da tenere
+        System.out.println("Number of processed items = " + streamLength[0]);
         System.out.println("Number of distinct items = " + dict_occurrences.size()); // da tenere
+        System.out.println("Number of Top-K Heavy Hitters = " + topk_hitters.size());
+        System.out.println("Avg Relative Error for Top-K Heavy Hitters with CM = "
+                + myMethodsHW3.rel_err_CM(topk_hitters,dict_occurrences,CM,h1));
+        System.out.println("Avg Relative Error for Top-K Heavy Hitters with CS = "
+                + myMethodsHW3.rel_err_CS(topk_hitters,dict_occurrences,CS,h2,g)); // da tenere
+
         if(K<=10){
+            System.out.println("Top-K Heavy Hitters:");
             List<Tuple2<Long,Integer>> topk_true_frq = new ArrayList<>();
             List<Tuple2<Long,Integer>> topk_est_frq = new ArrayList<>();
+            for(Long e : topk_hitters){
+                System.out.println("Item " + e
+                        + " True Frequency = " + dict_occurrences.get(e)
+                        + " Estimated Frequency with CM = " + myMethodsHW3.CS_occ(CS,e,h2,g));
+            }
             for(Long e : topk_hitters){
                 topk_true_frq.add(new Tuple2<>(e, dict_occurrences.get(e)));
                 topk_est_frq.add(new Tuple2<>(e, myMethodsHW3.CS_occ(CS,e,h2,g)));
