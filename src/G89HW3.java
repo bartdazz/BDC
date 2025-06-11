@@ -243,9 +243,6 @@ public class G89HW3 {
                 topk_true_frq.add(new Tuple2<>(e, dict_occurrences.get(e)));
                 topk_est_frq.add(new Tuple2<>(e, myMethodsHW3.CS_occ(CS, e, h2, g)));
             }
-            System.out.println("true top-" + K + " heavy hitters frequencies: " + topk_true_frq);
-            System.out.println("estimated top-" + K + " heavy hitters frequencies: " + topk_est_frq);
-
         }
 
     }
