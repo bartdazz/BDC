@@ -55,7 +55,7 @@ public class G89HW3 {
         streamLength[0] = 0L;
         // store total occurrences, key = number, value = occurrences of the key
         Map<Long, Integer> dict_occurrences = new HashMap<>();
-        ;
+        
         // list with value and total occurrences to compute \phi(K)
         List<Tuple2<Long, Integer>> total_occ = new ArrayList<>();
         // list of Top-K heavy hitters
