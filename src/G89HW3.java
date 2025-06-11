@@ -49,13 +49,16 @@ public class G89HW3 {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
         int[][] CM = new int[D][W]; // matrices to compute conservative count-min sketch
-        // &&&&&&&&&&&&&&&&&&&&&&&&&&&& THIS IS NOT CONSERVATIVE ANYMORE, RIGHT?? &&&&&&&&&&&&
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&& THIS IS NOT CONSERVATIVE ANYMORE, RIGHT??
+        // &&&&&&&&&&&&
         int[][] CS = new int[D][W]; // matrices to compute count sketch
         long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
         streamLength[0] = 0L;
-        // store total occurrences, key = number, value = occurrences of the key
+
+        // store total occurrences of the elements of the stream
+        // key = number, value = occurrences of the key
         Map<Long, Integer> dict_occurrences = new HashMap<>();
-        
+
         // list with value and total occurrences to compute \phi(K)
         List<Tuple2<Long, Integer>> total_occ = new ArrayList<>();
         // list of Top-K heavy hitters
@@ -87,40 +90,44 @@ public class G89HW3 {
                         long batchSize = batch.count();
                         streamLength[0] += batchSize;
                         if (batchSize > 0) {
-                            // &&&&&&&&&&&&&&&&&&&&&&&&
+                            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             // COMPUTE TRUE FREQUENCIES
-                            // &&&&&&&&&&&&&&&&&&&&&&&&
+                            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             /*
                              * get true frequency with map reduce:
                              * map : x -> (x,1), reduceBy key and sum the values
                              */
-                            List<Tuple2<Long, Integer>> occurrance;
-                            occurrance = batch.mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1))
+                            List<Tuple2<Long, Integer>> occurrence;
+                            occurrence = batch.mapToPair(s -> new Tuple2<>(Long.parseLong(s), 1))
                                     .reduceByKey((x, y) -> x + y).collect();
 
-                            // merge the occurrences in the dictionary of total occurrences
-                            for (Tuple2<Long, Integer> pair : occurrance) {
+                            // merge the occurrences of the elements in this RDD in the dictionary of total
+                            // occurrences
+                            for (Tuple2<Long, Integer> pair : occurrence) {
                                 dict_occurrences.put(pair._1(),
                                         dict_occurrences.getOrDefault(pair._1(), 0) + pair._2());
                             }
 
-                            // &&&&&&&&&&&&&
-                            // COMPUTE CS
-                            // &&&&&&&&&&&&&
+                            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+                            // COMPUTE Count Sketch
+                            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             /*
                              * idea to compute the CS:
-                             * potremmo associare ad ogni elemento a ((row,col), val)
-                             * così da non portarci dietro ogni cosa, poi raggrupare per key
-                             * e sommare i secondo termini.
-                             * una volta fatto con tutti gli elemnti costruiamo la matrice DxW
-                             * con un unica iterazione sulla lista ((row_i,col_i), val)_{i = 1,...., D*W}
+                             * We associate to each element the key (row, hash value of the column)
+                             * so in the reduce by key we just have to sum the values
+                             *
+                             * After the Map Reduce we can easily build the d by w table using the
+                             * coordinates and the values we've produced
                              */
-                            List<Tuple2<Tuple2<Integer, Integer>, Integer>> res; // outuput mapreduce
+                            List<Tuple2<Tuple2<Integer, Integer>, Integer>> res; // output MapReduce
                             res = batch.flatMapToPair(s -> {
                                 Long x = Long.parseLong(s);
                                 List<Tuple2<Tuple2<Integer, Integer>, Integer>> out = new ArrayList<>();
+                                // compute all the hash functions
                                 for (int j = 0; j < D; j++) {
+                                    // coordinate = (row, hash value for the column)
                                     int[] coordinate = new int[2];
+                                    // hash value
                                     int val = g.myHashG(x, j);
                                     coordinate[0] = j;
                                     coordinate[1] = h2.myHash(x, j);
@@ -128,14 +135,16 @@ public class G89HW3 {
                                 }
                                 return out.iterator();
                             }).reduceByKey((x, y) -> x + y).collect();
-                            // update the matrix CS with at most D*W iterations
+                            // update the matrix CS with at most D*W iterations using the values computed in
+                            // the MR
                             for (Tuple2<Tuple2<Integer, Integer>, Integer> entry : res) {
                                 CS[entry._1()._1()][entry._1()._2()] += entry._2();
                             }
-                            // &&&&&&&&&&&&&
-                            // COMPUTE CM
-                            // &&&&&&&&&&&&&
-                            List<Tuple2<Tuple2<Integer, Integer>, Integer>> rescm; // outuput mapreduce
+                            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+                            // COMPUTE Count-Min Sketch
+                            // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+                            // Same as Count Sketch but without using the hash function g
+                            List<Tuple2<Tuple2<Integer, Integer>, Integer>> rescm; // outuput MapReduce
                             rescm = batch.flatMapToPair(s -> {
                                 Long x = Long.parseLong(s);
                                 List<Tuple2<Tuple2<Integer, Integer>, Integer>> out1 = new ArrayList<>();
@@ -250,7 +259,9 @@ public class G89HW3 {
 
 class myMethodsHW3 {
     /*
-     * TOLTO PERCHè NON BISOGNA PIù USARE CONSERVATIVE COUNT MIN
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     * Removed since we don't have to code CountMin anymore
+     *
      * public static void updateCM(int[][] C, Long u, hfun h){
      * int D = h.getD();
      * List<Tuple2<Integer, Integer>> pairs = new ArrayList<>(); // pairs to be
@@ -281,7 +292,9 @@ class myMethodsHW3 {
      * C[p._1()][p._2()] += 1;
      * }
      * }
+     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      */
+
     public static double rel_err_CM(List<Long> topk_hitters, Map<Long, Integer> dict_occurrences, int[][] CM, hfun h) {
         List<Double> results = new ArrayList<>(topk_hitters.size());
         double average = 0;
@@ -365,6 +378,7 @@ class myMethodsHW3 {
     }
 }
 
+// hash functions
 class hfun implements java.io.Serializable {
     private int[][] V;
     private int[][] V2;
