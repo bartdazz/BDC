@@ -113,8 +113,9 @@ public class G89HW3 {
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             /*
                              * idea to compute the CS:
-                             * We associate to each element the key (row, hash value of the column)
-                             * so in the reduce by key we just have to sum the values
+                             * We associate to each element s the key (row, hash_row-th(s))
+                             * and the value g_row(s), for each row.
+                             * In the reduce by key we just have to sum the values
                              *
                              * After the Map Reduce we can easily build the d by w table using the
                              * coordinates and the values we've produced
@@ -143,7 +144,8 @@ public class G89HW3 {
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             // COMPUTE Count-Min Sketch
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-                            // Same as Count Sketch but without using the hash function g
+                            // Same as Count Sketch but instead of using the hash function g we associate 
+                            // the element s to the value 1
                             List<Tuple2<Tuple2<Integer, Integer>, Integer>> rescm; // outuput MapReduce
                             rescm = batch.flatMapToPair(s -> {
                                 Long x = Long.parseLong(s);
@@ -214,9 +216,11 @@ public class G89HW3 {
             total_occ.add(new Tuple2<>(key, value));
         }
         total_occ.sort((a, b) -> b._2().compareTo(a._2()));
-        // instead of having 11, 10, 10, 9, 9, 9, 8, 8, 6, 6
-        // in total_occ we have ((number_1 with 11 occ,11),(number_2 with 10
-        // occ,10),(number_3 with 10 occ,10),...)
+        // instead of having as in the example
+        // 11, 10, 10, 9, 9, 9, 8, 8, 6, 6 
+        // in total_occ we have 
+        // ((number_1 with 11 occurrences,11),(number_2 with 10 occ,10),
+        // (number_3 with 10 occ,10),...)
         topk_hitters = myMethodsHW3.topk(total_occ, K); // List<Long> of top_K heavy hitters
 
         ////////////////////
@@ -258,43 +262,8 @@ public class G89HW3 {
 }
 
 class myMethodsHW3 {
-    /*
-     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     * Removed since we don't have to code CountMin anymore
-     *
-     * public static void updateCM(int[][] C, Long u, hfun h){
-     * int D = h.getD();
-     * List<Tuple2<Integer, Integer>> pairs = new ArrayList<>(); // pairs to be
-     * updated
-     * int val_min = C[0][h.myHash(u,0)]; // initialize the minimum value
-     * 
-     * for(int i = 0; i<D; i++){
-     * int[] temp_pairs = {i,h.myHash(u,i)};
-     * int temp_val = C[temp_pairs[0]][temp_pairs[1]];
-     * if(temp_val == val_min){
-     * // if the current value of i-th row is the same to the
-     * // minimal value add the coordinate to the pairs
-     * pairs.add(new Tuple2<>(i,h.myHash(u,i)));
-     * }
-     * if(temp_val < val_min){
-     * // if the current value of i-th row is the same to the
-     * // minimal value we are not interested in the pairs we selected,
-     * // we delete all the ones saved and add the new one.
-     * // we also update the val_min
-     * val_min = temp_val;
-     * pairs.clear(); // Removes all elements from the list
-     * pairs.add(new Tuple2<>(temp_pairs[0],temp_pairs[1]));
-     * }
-     * // if temp_val > val_min we don't care about the current temp_pairs
-     * }
-     * // now we can update the C matrix
-     * for(Tuple2<Integer, Integer> p : pairs){
-     * C[p._1()][p._2()] += 1;
-     * }
-     * }
-     * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     */
 
+    // Compute the relative error of the top-K hitters in the Count Min
     public static double rel_err_CM(List<Long> topk_hitters, Map<Long, Integer> dict_occurrences, int[][] CM, hfun h) {
         List<Double> results = new ArrayList<>(topk_hitters.size());
         double average = 0;
@@ -311,6 +280,7 @@ class myMethodsHW3 {
         return average;
     }
 
+    // Compute the relative error of the top-K hitters in the Count Sketch
     public static double rel_err_CS(List<Long> topk_hitters, Map<Long, Integer> dict_occurrences, int[][] CS, hfun h,
             hfun g) {
         List<Double> results = new ArrayList<>(topk_hitters.size());
@@ -328,6 +298,7 @@ class myMethodsHW3 {
         return average;
     }
 
+    // Coumpute the occurrences givene the matrix of the Count Sketch
     public static int CS_occ(int[][] CS, Long u, hfun h, hfun g) {
         ArrayList<Integer> f_us = new ArrayList<>(h.getD());
         for (int j = 0; j < h.getD(); j++) {
@@ -336,6 +307,7 @@ class myMethodsHW3 {
         return getMedian(f_us);
     }
 
+    // Coumpute the occurrences givene the matrix of the Count Min
     public static int CM_occ(int[][] CM, Long u, hfun h) {
         // initialize the minimal value
         int min_val = CM[0][h.myHash(u, 0)];
@@ -349,6 +321,7 @@ class myMethodsHW3 {
         return min_val;
     }
 
+    // given a list compute the median 
     public static int getMedian(List<Integer> f_us) {
         Collections.sort(f_us);
         int n = f_us.size();
@@ -359,14 +332,15 @@ class myMethodsHW3 {
         }
     }
 
-    /*
-     * top-K heavy hitters are defined as the items of u∈Σ whose true frequency is
-     * fu≥ϕ(K)
-     * so we have to iterate over the vector until i<K or the next
-     */
+    // compute the top-K hitters
     public static List<Long> topk(List<Tuple2<Long, Integer>> total_occ, int K) {
         int phi_K = total_occ.get(K - 1)._2();
         List<Long> topk_hitters = new ArrayList<>();
+            /*
+            * top-K heavy hitters are defined as the items of u∈Σ whose true frequency is
+            * fu≥ϕ(K)
+            * so we have to iterate over the vector until i<K or the next
+            */
         for (Tuple2<Long, Integer> t : total_occ) {
             if (t._2() >= phi_K) {
                 topk_hitters.add(t._1());
@@ -393,6 +367,7 @@ class hfun implements java.io.Serializable {
         return W;
     }
 
+    // generate the values used for the hash functions
     public void GenerateH(Integer size, Integer mod) {
         this.W = mod;
         this.V = new int[size][2];
@@ -407,6 +382,7 @@ class hfun implements java.io.Serializable {
         }
     }
 
+    // to compute h_i(x) -> {0,...,W-1} for i = 1,...,D 
     public int myHash(Long x, int i) {
         Long res1 = Math.floorMod((x * V[i][0]) + V[i][1], 8191);
         Long a = Math.floorMod(res1, W);
@@ -414,13 +390,13 @@ class hfun implements java.io.Serializable {
         return b; // ((x*a +b) mod p) mod D
     }
 
-    // to generate g_i(x) -> {+1,-1} for i = 1,...,D and x an .
+    // to generate g_i(x) -> {+1,-1} for i = 1,...,D.
     // The idea is to generate a unique value given i and x such
-    // that we can generate g_i unique
+    // that we can generate g_i unique for each i
     public int myHashG(Long x, int i) {
         Random r = new Random();
-        // We set the seed by using the values of V
-        // I used V2 instead of V because if two element does a collision in myHash,
+        // We set the seed by using the values of V2
+        // I used V2 instead of V otherwise if two element does a collision in myHash,
         // the same happen to myHashG
         r.setSeed(Math.abs(x * V2[i][0] + V2[i][1]));
         return (r.nextInt(2) == 0) ? 1 : -1;
