@@ -9,7 +9,6 @@ import java.util.concurrent.Semaphore;
 public class G89HW3 {
 
     public static void main(String[] args) throws Exception {
-        for (int round = 0; round < 3; round++) {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         // CHECKING NUMBER OF CMD LINE PARAMETERS
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -204,10 +203,8 @@ public class G89HW3 {
         // COMPUTE AND PRINT FINAL STATISTICS
         /*
          * To compute the real occurrences of the values we extract from the dictionary
-         * the key and values and store it the List total_occ, then we sort by the
-         * number of
-         * occurrences in a non-decreasing order in respect of the value
-         *
+         * the key and values, and we store them  in the List total_occ, then we sort by the
+         * number of occurrences in a non-increasing order in respect of the value
          */
         total_occ = new ArrayList<>(dict_occurrences.size());
         for (Map.Entry<Long, Integer> entry : dict_occurrences.entrySet()) {
@@ -258,7 +255,7 @@ public class G89HW3 {
             }
         }
 
-    }
+
 
     }
 }
