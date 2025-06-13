@@ -1,20 +1,12 @@
+%%%%%%%%%%%
+PRIMA RIGA
+
 Port = 8886 T = 200000 D = 7 W = 100 K = 10
 Number of processed items = 205973
 Number of distinct items = 41319
 Number of Top-K Heavy Hitters = 10
 Avg Relative Error for Top-K Heavy Hitters with CM = 0.023779346453082762
 Avg Relative Error for Top-K Heavy Hitters with CS = 4.7582711688746066E-4
-Top-K Heavy Hitters:
-Item 1690049656 True Frequency = 16680 Estimated Frequency with CM = 16678
-Item 339323283 True Frequency = 16601 Estimated Frequency with CM = 16604
-Item 195773912 True Frequency = 16565 Estimated Frequency with CM = 16562
-Item 1472610405 True Frequency = 16548 Estimated Frequency with CM = 16541
-Item 870070186 True Frequency = 16528 Estimated Frequency with CM = 16535
-Item 434415286 True Frequency = 16468 Estimated Frequency with CM = 16476
-Item 819911327 True Frequency = 16383 Estimated Frequency with CM = 16392
-Item 1936875793 True Frequency = 16378 Estimated Frequency with CM = 16381
-Item 641486445 True Frequency = 16283 Estimated Frequency with CM = 16250
-Item 1590293530 True Frequency = 16212 Estimated Frequency with CM = 16209
 
 
 Port = 8886 T = 100000 D = 9 W = 100 K = 10
@@ -31,12 +23,8 @@ Number of Top-K Heavy Hitters = 10
 Avg Relative Error for Top-K Heavy Hitters with CM = 0.022662386629920053
 Avg Relative Error for Top-K Heavy Hitters with CS = 5.715885154626945E-4
 
-Port = 8886 T = 100000 D = 9 W = 100 K = 10
-Number of processed items = 203874
-Number of distinct items = 40881
-Number of Top-K Heavy Hitters = 10
-Avg Relative Error for Top-K Heavy Hitters with CM = 0.02362868111530574
-Avg Relative Error for Top-K Heavy Hitters with CS = 5.149483703159815E-4
+%%%%%%%%%%%%%%%
+SECONDA
 
 Port = 8886 T = 100000 D = 9 W = 100 K = 20
 Number of processed items = 281200
@@ -59,3 +47,147 @@ Number of Top-K Heavy Hitters = 30
 Avg Relative Error for Top-K Heavy Hitters with CM = 139.42450329428388
 Avg Relative Error for Top-K Heavy Hitters with CS = 2.03351430631062
 
+%%%%%%%%%%%
+TERZA
+
+Port = 8886 T = 100000 D = 9 W = 100 K = 50
+Number of processed items = 102494
+Number of distinct items = 20784
+Number of Top-K Heavy Hitters = 20784
+Avg Relative Error for Top-K Heavy Hitters with CM = 198.40087231098383
+Avg Relative Error for Top-K Heavy Hitters with CS = 15.971997890557974
+
+Port = 8886 T = 100000 D = 9 W = 100 K = 50
+Number of processed items = 137752
+Number of distinct items = 27699
+Number of Top-K Heavy Hitters = 27699
+Avg Relative Error for Top-K Heavy Hitters with CM = 268.09156396599366
+Avg Relative Error for Top-K Heavy Hitters with CS = 21.158291096602042
+
+Port = 8886 T = 100000 D = 9 W = 100 K = 50
+Number of processed items = 118935
+Number of distinct items = 23993
+Number of Top-K Heavy Hitters = 23993
+Avg Relative Error for Top-K Heavy Hitters with CM = 231.03451981584712
+Avg Relative Error for Top-K Heavy Hitters with CS = 18.630830028290013
+
+%%%%%%%%%%%
+QUARTA
+
+Port = 8886 T = 100000 D = 9 W = 100 K = 100
+Number of processed items = 103539
+Number of distinct items = 21001
+Number of Top-K Heavy Hitters = 21001
+Avg Relative Error for Top-K Heavy Hitters with CM = 200.87130254172962
+Avg Relative Error for Top-K Heavy Hitters with CS = 15.434027181820761
+
+Port = 8886 T = 100000 D = 9 W = 100 K = 100
+Number of processed items = 129083
+Number of distinct items = 25979
+Number of Top-K Heavy Hitters = 25979
+Avg Relative Error for Top-K Heavy Hitters with CM = 251.78866513761224
+Avg Relative Error for Top-K Heavy Hitters with CS = 20.78051520297368
+
+Port = 8886 T = 100000 D = 9 W = 100 K = 100
+Number of processed items = 102625
+Number of distinct items = 20807
+Number of Top-K Heavy Hitters = 20807
+Avg Relative Error for Top-K Heavy Hitters with CM = 198.58209854420602
+Avg Relative Error for Top-K Heavy Hitters with CS = 14.315278880378818
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+FINE PRIMA TABELLA - INIZIO SECONDA
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Port = 8886 T = 100000 D = 9 W = 5 K = 10
+Number of processed items = 113064
+Number of distinct items = 22826
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.899570122588558
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.49735795358289153
+
+Port = 8886 T = 100000 D = 9 W = 5 K = 10
+Number of processed items = 121026
+Number of distinct items = 24395
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.8993597517880166
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.205063964681778
+
+Port = 8886 T = 100000 D = 9 W = 5 K = 10
+Number of processed items = 101484
+Number of distinct items = 20586
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.8092726284862163
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.1105708719164703
+
+%%%%%%%%%%%
+SECONDA
+
+Port = 8886 T = 100000 D = 9 W = 10 K = 10
+Number of processed items = 101062
+Number of distinct items = 20494
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.25031677556256754
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.004170618607417938
+
+Port = 8886 T = 100000 D = 9 W = 10 K = 10
+Number of processed items = 116978
+Number of distinct items = 23618
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.24973208059654123
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.19822368311469987
+
+Port = 8886 T = 100000 D = 9 W = 10 K = 10
+Number of processed items = 104193
+Number of distinct items = 21130
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.24635481384782917
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.0054922267353025
+
+%%%%%%%%%%%
+TERZA
+
+Port = 8886 T = 100000 D = 9 W = 20 K = 10
+Number of processed items = 174174
+Number of distinct items = 35012
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.12176742369248669
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.20096435327619896
+
+Port = 8886 T = 100000 D = 9 W = 20 K = 10
+Number of processed items = 120670
+Number of distinct items = 24335
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.1216648753023822
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.10087860816166323
+
+Port = 8886 T = 100000 D = 9 W = 20 K = 10
+Number of processed items = 109674
+Number of distinct items = 22165
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.12274198617896534
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.10170799832430333
+
+%%%%%%%%%%%
+QUARTA
+
+Port = 8886 T = 100000 D = 9 W = 50 K = 10
+Number of processed items = 100147
+Number of distinct items = 20313
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.046851017387021486
+Avg Relative Error for Top-K Heavy Hitters with CS = 6.704338355561911E-4
+
+Port = 8886 T = 100000 D = 9 W = 50 K = 10
+Number of processed items = 120766
+Number of distinct items = 24349
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.048068770103217105
+Avg Relative Error for Top-K Heavy Hitters with CS = 9.319635206607058E-4
+
+Port = 8886 T = 100000 D = 9 W = 50 K = 10
+Number of processed items = 116457
+Number of distinct items = 23511
+Number of Top-K Heavy Hitters = 10
+Avg Relative Error for Top-K Heavy Hitters with CM = 0.048130906763819335
+Avg Relative Error for Top-K Heavy Hitters with CS = 0.0010344257241934572
