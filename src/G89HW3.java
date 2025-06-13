@@ -9,7 +9,7 @@ import java.util.concurrent.Semaphore;
 public class G89HW3 {
 
     public static void main(String[] args) throws Exception {
-
+        for (int round = 0; round < 3; round++) {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         // CHECKING NUMBER OF CMD LINE PARAMETERS
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -49,8 +49,6 @@ public class G89HW3 {
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
         int[][] CM = new int[D][W]; // matrices to compute conservative count-min sketch
-        // &&&&&&&&&&&&&&&&&&&&&&&&&&&& THIS IS NOT CONSERVATIVE ANYMORE, RIGHT??
-        // &&&&&&&&&&&&
         int[][] CS = new int[D][W]; // matrices to compute count sketch
         long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
         streamLength[0] = 0L;
@@ -61,6 +59,7 @@ public class G89HW3 {
 
         // list with value and total occurrences to compute \phi(K)
         List<Tuple2<Long, Integer>> total_occ = new ArrayList<>();
+
         // list of Top-K heavy hitters
         List<Long> topk_hitters = new ArrayList<>();
 
@@ -71,8 +70,8 @@ public class G89HW3 {
         h1.GenerateH(D, W);
         h2.GenerateH(D, W);
         g.GenerateH(D, W);
-        // exemple of usage of the i-th function between the h1 ones: h1.myHash(x,i)
-        // exemple of usage of the i-th function between the g ones: g.myHashG(x,i)
+        // example of usage of the i-th function between the h1 ones: h1.myHash(x,i)
+        // example of usage of the i-th function between the g ones: g.myHashG(x,i)
 
         // initialize the matrices CM and CS
         for (int j = 0; j < D; j++) {
@@ -141,10 +140,11 @@ public class G89HW3 {
                             for (Tuple2<Tuple2<Integer, Integer>, Integer> entry : res) {
                                 CS[entry._1()._1()][entry._1()._2()] += entry._2();
                             }
+
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             // COMPUTE Count-Min Sketch
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-                            // Same as Count Sketch but instead of using the hash function g we associate 
+                            // Same as Count Sketch but instead of using the hash function g we associate
                             // the element s to the value 1
                             List<Tuple2<Tuple2<Integer, Integer>, Integer>> rescm; // outuput MapReduce
                             rescm = batch.flatMapToPair(s -> {
@@ -217,8 +217,8 @@ public class G89HW3 {
         }
         total_occ.sort((a, b) -> b._2().compareTo(a._2()));
         // instead of having as in the example
-        // 11, 10, 10, 9, 9, 9, 8, 8, 6, 6 
-        // in total_occ we have 
+        // 11, 10, 10, 9, 9, 9, 8, 8, 6, 6
+        // in total_occ we have
         // ((number_1 with 11 occurrences,11),(number_2 with 10 occ,10),
         // (number_3 with 10 occ,10),...)
         topk_hitters = myMethodsHW3.topk(total_occ, K); // List<Long> of top_K heavy hitters
@@ -257,6 +257,8 @@ public class G89HW3 {
                 topk_est_frq.add(new Tuple2<>(e, myMethodsHW3.CS_occ(CS, e, h2, g)));
             }
         }
+
+    }
 
     }
 }
@@ -321,7 +323,7 @@ class myMethodsHW3 {
         return min_val;
     }
 
-    // given a list compute the median 
+    // given a list compute the median
     public static int getMedian(List<Integer> f_us) {
         Collections.sort(f_us);
         int n = f_us.size();
@@ -336,11 +338,11 @@ class myMethodsHW3 {
     public static List<Long> topk(List<Tuple2<Long, Integer>> total_occ, int K) {
         int phi_K = total_occ.get(K - 1)._2();
         List<Long> topk_hitters = new ArrayList<>();
-            /*
-            * top-K heavy hitters are defined as the items of u∈Σ whose true frequency is
-            * fu≥ϕ(K)
-            * so we have to iterate over the vector until i<K or the next
-            */
+        /*
+         * top-K heavy hitters are defined as the items of u∈Σ whose true frequency is
+         * fu≥ϕ(K)
+         * so we have to iterate over the vector until i<K or the next
+         */
         for (Tuple2<Long, Integer> t : total_occ) {
             if (t._2() >= phi_K) {
                 topk_hitters.add(t._1());
@@ -382,7 +384,7 @@ class hfun implements java.io.Serializable {
         }
     }
 
-    // to compute h_i(x) -> {0,...,W-1} for i = 1,...,D 
+    // to compute h_i(x) -> {0,...,W-1} for i = 1,...,D
     public int myHash(Long x, int i) {
         Long res1 = Math.floorMod((x * V[i][0]) + V[i][1], 8191);
         Long a = Math.floorMod(res1, W);
