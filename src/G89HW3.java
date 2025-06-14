@@ -147,7 +147,7 @@ public class G89HW3 {
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             // Same as Count Sketch but instead of using the hash function g,
                             // in the reduce phase we associate the element s to the value 1
-                            List<Tuple2<Tuple2<Integer, Integer>, Integer>> rescm; // outuput MapReduce
+                            List<Tuple2<Tuple2<Integer, Integer>, Integer>> rescm; // output MapReduce
                             rescm = batch.flatMapToPair(s -> {
                                 Long x = Long.parseLong(s);
                                 List<Tuple2<Tuple2<Integer, Integer>, Integer>> out1 = new ArrayList<>();
@@ -279,7 +279,7 @@ class myMethodsHW3 {
         return average;
     }
 
-    // Compute the occurrences givene the matrix of the Count Sketch
+    // Compute the occurrences given the matrix of the Count Sketch
     public static int CS_occ(int[][] CS, Long u, hfun h, hfun g) {
         // CS = count-sketch matrix
         // h,g = object of the class hfun containing the hash functions for Count-Sketch
@@ -353,6 +353,7 @@ class hfun implements java.io.Serializable {
 
 
     // generate the values used for the hash functions
+    // we generate two tables V and V2 with two columns in which we store the values of a and b needed for all the hash functions h and g
     public void GenerateH(Integer size, Integer mod) {
         // size = number of row
         // mod = number of column in CS and CM
