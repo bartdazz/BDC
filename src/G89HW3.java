@@ -47,7 +47,7 @@ public class G89HW3 {
         // DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
         // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
-        int[][] CM = new int[D][W]; // matrices to compute conservative count-min sketch
+        int[][] CM = new int[D][W]; // matrices to compute count-min sketch
         int[][] CS = new int[D][W]; // matrices to compute count sketch
         long[] streamLength = new long[1]; // Stream length (an array to be passed by reference)
         streamLength[0] = 0L;
@@ -92,7 +92,7 @@ public class G89HW3 {
                             // COMPUTE TRUE FREQUENCIES
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             /*
-                             * get true frequency with map reduce:
+                             * get true frequency in the batch with map reduce:
                              * map : x -> (x,1), reduceBy key and sum the values
                              */
                             List<Tuple2<Long, Integer>> occurrence;
@@ -111,9 +111,10 @@ public class G89HW3 {
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             /*
                              * idea to compute the CS:
-                             * We associate to each element s the key (row, hash_row-th(s))
-                             * and the value g_row(s), for each row.
-                             * In the reduce by key we just have to sum the values
+                             * We associate to each element s the key (j, h_j(s))
+                             * and the value g_j(s),for each j = 0,...,d-1.
+                             * h_j and g_j are the hash functions of the row j.
+                             * Then we reduce by key and we sum the values
                              *
                              * After the Map Reduce we can easily build the d by w table using the
                              * coordinates and the values we've produced
@@ -134,6 +135,7 @@ public class G89HW3 {
                                 }
                                 return out.iterator();
                             }).reduceByKey((x, y) -> x + y).collect();
+
                             // update the matrix CS with at most D*W iterations using the values computed in
                             // the MR
                             for (Tuple2<Tuple2<Integer, Integer>, Integer> entry : res) {
@@ -143,8 +145,8 @@ public class G89HW3 {
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
                             // COMPUTE Count-Min Sketch
                             // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-                            // Same as Count Sketch but instead of using the hash function g we associate
-                            // the element s to the value 1
+                            // Same as Count Sketch but instead of using the hash function g,
+                            // in the reduce phase we associate the element s to the value 1
                             List<Tuple2<Tuple2<Integer, Integer>, Integer>> rescm; // outuput MapReduce
                             rescm = batch.flatMapToPair(s -> {
                                 Long x = Long.parseLong(s);
@@ -171,27 +173,16 @@ public class G89HW3 {
                     }
                 });
 
-        // MANAGING STREAMING SPARK CONTEXT
-        // System.out.println("Starting streaming engine");
         sc.start();
-        // System.out.println("Waiting for shutdown condition");
         stoppingSemaphore.acquire();
-        // System.out.println("Stopping the streaming engine");
 
-        /*
-         * The following command stops the execution of the stream. The first boolean,
-         * if true, also
-         * stops the SparkContext, while the second boolean, if true, stops gracefully
-         * by waiting for
-         * the processing of all received data to be completed. You might get some error
-         * messages when
-         * the program ends, but they will not affect the correctness. You may also try
-         * to set the second
-         * parameter to true.
-         */
+        // The following command stops the execution of the stream
+        sc.stop(false, true);
 
-        sc.stop(true, true);
-        // System.out.println("Streaming engine stopped");
+
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        // COMPUTE AND PRINT FINAL STATISTICS
+        // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
         // print command-line arguments
         System.out.println("Port = " + portExp
@@ -200,11 +191,11 @@ public class G89HW3 {
                 + " W = " + W
                 + " K = " + K);
 
-        // COMPUTE AND PRINT FINAL STATISTICS
         /*
          * To compute the real occurrences of the values we extract from the dictionary
-         * the key and values, and we store them  in the List total_occ, then we sort by the
-         * number of occurrences in a non-increasing order in respect of the value
+         * the keys and values, and we store ( key, value) in the List total_occ for each key,
+         * then we sort by the number of occurrences in a non-increasing order
+         * in respect of the value
          */
         total_occ = new ArrayList<>(dict_occurrences.size());
         for (Map.Entry<Long, Integer> entry : dict_occurrences.entrySet()) {
@@ -218,40 +209,23 @@ public class G89HW3 {
         // in total_occ we have
         // ((number_1 with 11 occurrences,11),(number_2 with 10 occ,10),
         // (number_3 with 10 occ,10),...)
-        topk_hitters = myMethodsHW3.topk(total_occ, K); // List<Long> of top_K heavy hitters
+        topk_hitters = myMethodsHW3.topk(total_occ, K); // List<Long> of Top_K heavy hitters
 
-        ////////////////////
-        // DEBUG
-        ////////////////////
-        /*
-         * System.out.println("top K heavy hitters: " + topk_hitters); // prova
-         * System.out.println("Items with the most occ:" + total_occ.get(0)); // prova
-         * System.out.println("calcolato da CS: " + total_occ.get(0)._1()+","+
-         * myMethodsHW3.CS_occ(CS,total_occ.get(0)._1(), h2,g));
-         * System.out.println("calcolato da CM: " + total_occ.get(0)._1()+","+
-         * myMethodsHW3.CM_occ(CM,total_occ.get(0)._1(), h1));
-         */
 
         System.out.println("Number of processed items = " + streamLength[0]);
-        System.out.println("Number of distinct items = " + dict_occurrences.size()); // da tenere
+        System.out.println("Number of distinct items = " + dict_occurrences.size());
         System.out.println("Number of Top-K Heavy Hitters = " + topk_hitters.size());
         System.out.println("Avg Relative Error for Top-K Heavy Hitters with CM = "
                 + myMethodsHW3.rel_err_CM(topk_hitters, dict_occurrences, CM, h1));
         System.out.println("Avg Relative Error for Top-K Heavy Hitters with CS = "
-                + myMethodsHW3.rel_err_CS(topk_hitters, dict_occurrences, CS, h2, g)); // da tenere
+                + myMethodsHW3.rel_err_CS(topk_hitters, dict_occurrences, CS, h2, g));
 
         if (K <= 10) {
             System.out.println("Top-K Heavy Hitters:");
-            List<Tuple2<Long, Integer>> topk_true_frq = new ArrayList<>();
-            List<Tuple2<Long, Integer>> topk_est_frq = new ArrayList<>();
             for (Long e : topk_hitters) {
                 System.out.println("Item " + e
                         + " True Frequency = " + dict_occurrences.get(e)
                         + " Estimated Frequency with CM = " + myMethodsHW3.CS_occ(CS, e, h2, g));
-            }
-            for (Long e : topk_hitters) {
-                topk_true_frq.add(new Tuple2<>(e, dict_occurrences.get(e)));
-                topk_est_frq.add(new Tuple2<>(e, myMethodsHW3.CS_occ(CS, e, h2, g)));
             }
         }
 
@@ -262,8 +236,12 @@ public class G89HW3 {
 
 class myMethodsHW3 {
 
-    // Compute the relative error of the top-K hitters in the Count Min
+    // Compute the relative error of the Top-K hitters in the Count Min
     public static double rel_err_CM(List<Long> topk_hitters, Map<Long, Integer> dict_occurrences, int[][] CM, hfun h) {
+        // dict_occurrences = dictionary with real occurrences
+        // topk_hitters = list of Top-K hitters
+        // CM = count-min matrix
+        // h = object of the class hfun containing the hash functions for Count-Min Sketch
         List<Double> results = new ArrayList<>(topk_hitters.size());
         double average = 0;
         for (Long val : topk_hitters) {
@@ -282,6 +260,10 @@ class myMethodsHW3 {
     // Compute the relative error of the top-K hitters in the Count Sketch
     public static double rel_err_CS(List<Long> topk_hitters, Map<Long, Integer> dict_occurrences, int[][] CS, hfun h,
             hfun g) {
+        // dict_occurrences = dictionary with real occurrences
+        // topk_hitters = list of Top-K hitters
+        // CS = count-sketch matrix
+        // h,g = object of the class hfun containing the hash functions for Count-Sketch
         List<Double> results = new ArrayList<>(topk_hitters.size());
         double average = 0;
         for (Long val : topk_hitters) {
@@ -297,8 +279,11 @@ class myMethodsHW3 {
         return average;
     }
 
-    // Coumpute the occurrences givene the matrix of the Count Sketch
+    // Compute the occurrences givene the matrix of the Count Sketch
     public static int CS_occ(int[][] CS, Long u, hfun h, hfun g) {
+        // CS = count-sketch matrix
+        // h,g = object of the class hfun containing the hash functions for Count-Sketch
+        // u = element
         ArrayList<Integer> f_us = new ArrayList<>(h.getD());
         for (int j = 0; j < h.getD(); j++) {
             f_us.add(g.myHashG(u, j) * CS[j][h.myHash(u, j)]);
@@ -306,8 +291,12 @@ class myMethodsHW3 {
         return getMedian(f_us);
     }
 
-    // Coumpute the occurrences givene the matrix of the Count Min
+    // Compute the occurrences given the matrix of the Count Min
     public static int CM_occ(int[][] CM, Long u, hfun h) {
+        // Cm = count-min matrix
+        // h= object of the class hfun containing the hash function for Count-Min
+        // u = element
+
         // initialize the minimal value
         int min_val = CM[0][h.myHash(u, 0)];
         for (int j = 0; j < h.getD(); j++) {
@@ -320,7 +309,7 @@ class myMethodsHW3 {
         return min_val;
     }
 
-    // given a list compute the median
+    // given a list of integer compute the median
     public static int getMedian(List<Integer> f_us) {
         Collections.sort(f_us);
         int n = f_us.size();
@@ -331,7 +320,7 @@ class myMethodsHW3 {
         }
     }
 
-    // compute the top-K hitters
+    // Compute the top-K hitters
     public static List<Long> topk(List<Tuple2<Long, Integer>> total_occ, int K) {
         int phi_K = total_occ.get(K - 1)._2();
         List<Long> topk_hitters = new ArrayList<>();
@@ -362,22 +351,21 @@ class hfun implements java.io.Serializable {
         return D;
     }
 
-    public int getW() {
-        return W;
-    }
 
     // generate the values used for the hash functions
     public void GenerateH(Integer size, Integer mod) {
+        // size = number of row
+        // mod = number of column in CS and CM
         this.W = mod;
         this.V = new int[size][2];
         this.V2 = new int[size][2];
         this.D = size;
         Random rand = new Random();
         for (int j = 0; j < D; j++) {
-            V[j][1] = rand.nextInt(8191); // \in {0,1,...,8190} valori di b
-            V[j][0] = rand.nextInt(8190) + 1; // \in {1,2...,8190} valori di a
-            V2[j][1] = rand.nextInt(8191); // \in {0,1,...,8190} valori di b
-            V2[j][0] = rand.nextInt(8190) + 1; // \in {1,2...,8190} valori di a
+            V[j][1] = rand.nextInt(8191);       // \in {0,1,...,8190}, values of b
+            V[j][0] = rand.nextInt(8190) + 1;   // \in {1,2...,8190} values of a
+            V2[j][1] = rand.nextInt(8191);      // \in {0,1,...,8190}, values of b
+            V2[j][0] = rand.nextInt(8190) + 1;  // \in {1,2...,8190} values of a
         }
     }
 
@@ -391,7 +379,12 @@ class hfun implements java.io.Serializable {
 
     // to generate g_i(x) -> {+1,-1} for i = 1,...,D.
     // The idea is to generate a unique value given i and x such
-    // that we can generate g_i unique for each i
+    // that we can generate g_i unique for each i.
+    // The unique value given i and x generated is used
+    // as a key to generate a new instance of the Random class.
+    // This ensures that g is a function which always returns the same
+    // result for each given x and i, and the probability that g_i(x) = 1
+    // for random x and i is exactly one half.
     public int myHashG(Long x, int i) {
         Random r = new Random();
         // We set the seed by using the values of V2
