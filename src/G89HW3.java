@@ -225,7 +225,7 @@ public class G89HW3 {
             for (Long e : topk_hitters) {
                 System.out.println("Item " + e
                         + " True Frequency = " + dict_occurrences.get(e)
-                        + " Estimated Frequency with CM = " + myMethodsHW3.CS_occ(CS, e, h2, g));
+                        + " Estimated Frequency with CM = " + myMethodsHW3.CM_occ(CM, e, h1));
             }
         }
 
