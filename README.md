@@ -39,4 +39,4 @@ The program processes a stream of items in batches until a specified threshold $
 2.  **Count-Sketch Update:** Computes and applies the updates to the $D \times W$ Count-Sketch matrix.
 3.  **Ground Truth:** Calculates the *exact* frequencies of items in the batch and updates a global hash map to maintain the true count for all items seen so far.
 
-Once the stream processing stops (after $T$ items), the program identifies the true Top-$K$ most frequent items. It then evaluates the accuracy of both sketches by computing the Average Relative Error (ARE) between their frequency estimates and the true frequencies for these $K$ items.
+Once the stream processing stops (after $T$ items), the program identifies the true Top- $K$ most frequent items. It then evaluates the accuracy of both sketches by computing the Average Relative Error (ARE) between their frequency estimates and the true frequencies for these $K$ items.
